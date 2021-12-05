@@ -7,7 +7,7 @@ OP_TASK = ['name', 'step', 'operation']
 #Operation Key values
 OP_COPY = ['target', 'origin', 'destination', 'subfolders']
 OP_MOVE = ['target', 'origin', 'destination']
-OP_DELETE = ['target', 'origin', 'destination']
+OP_DELETE = ['target', 'destination']
 OP_ZIP = ['target', 'destination', 'rename']
 
 #Available Operations

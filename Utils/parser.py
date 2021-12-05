@@ -43,17 +43,21 @@ class Parser:
             elif task['operation'] == 'move':
                 pass
             elif task['operation'] == 'delete':
-                pass
+                fp = []
+                if '*' in task['target']:
+                    all_files = self.__get_all_file_paths(task['destination']) if task['subfolders'] == True else os.listdir(task['destination'])
+                    fp = [_ for _ in all_files if self.__get_file_name(_).endswith(task['target'].split('.')[1])]
+                elif task['target'].startswith('$'):
+                    step = self.__get_step_reference(task)
+                    all_files = self.__get_all_file_paths(step['destination'])
+                    fp = [_ for _ in all_files if self.__get_file_name(_).endswith(step['target'].split('.')[1])]
+                for _ in fp:
+                    os.remove(_)
             elif task['operation'] == 'zip':
                 fp = []
                 files = []
                 if task['target'].startswith('$'):
-                    #get step in reference
-                    step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(task['target'].replace('$',''))), None)
-                    if step_index == None:
-                        self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
-                        raise Exception()
-                    step = self.__executed_tasks[step_index]
+                    step = self.__get_step_reference(task)
                     fp = [f"{step['destination']}/{_}" for _ in os.listdir(step['destination'])]
                     files = os.listdir(step['destination'])
                 else:
@@ -113,3 +117,11 @@ class Parser:
                 task['destination'] = f"{home}/{task['destination']}".replace('\\','/')
                 if 'origin' in task.keys() and ":" not in task['origin']:
                     task['origin'] = f"{home}/{task['origin']}".replace('\\','/')
+    
+    def __get_step_reference(self, task: Task) -> Task:
+        #get step in reference
+        step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(task['target'].replace('$',''))), None)
+        if step_index == None:
+            self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
+            raise Exception()
+        return self.__executed_tasks[step_index]
