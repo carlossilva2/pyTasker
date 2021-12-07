@@ -7,8 +7,8 @@ OP_TASK = ['name', 'step', 'operation']
 #Operation Key values
 OP_COPY = ['target', 'origin', 'destination', 'subfolders']
 OP_MOVE = ['target', 'origin', 'destination']
-OP_DELETE = ['target', 'destination']
-OP_ZIP = ['target', 'destination', 'rename']
+OP_DELETE = ['target', '!destination']
+OP_ZIP = ['target', 'rename', '!deflate', '!destination']
 
 #Available Operations
 OPERATIONS = ['copy', 'zip', 'move', 'delete']
@@ -24,6 +24,7 @@ class Task(TypedDict):
     destination: str
     rename: str
     subfolders: bool
+    deflate: bool
 
 #Structure Definition for instruction_set
 class InstructionSet(TypedDict):
