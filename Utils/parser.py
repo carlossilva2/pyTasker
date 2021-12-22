@@ -4,6 +4,7 @@ import sys
 import shutil
 import os.path as Path
 from .types import *
+import Utils.operations as Operations
 from logging import Logger
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -20,6 +21,7 @@ class Parser:
         self.logger = logger
         self.__change_relative_locations(default_location)
         self.__executed_tasks: 'List[Task]' = []
+        self.__operation_stack = []
     
     def execute(self) -> None:
         self.task['tasks'] = sorted(self.task['tasks'], key=lambda d: d['step'])
@@ -28,12 +30,18 @@ class Parser:
                 self.logger.debug(f"Task \"{task['name']}\" - OK")
             else:
                 self.logger.error(f"Task \"{task['name']}\" - ERROR")
+        for op in self.__operation_stack:
+            if not op.get_state():
+                self.logger.debug("Failed operation")
 
     def __execute(self, task: Task) -> bool:
         try:
             self.__check_destination_path(task)
             if task['operation'] == 'copy':
-                _copy(self, task)
+                c = Operations.Copy(self, task, self.logger)
+                c.execute()
+                self.__operation_stack.append(c)
+                #_copy(self, task)
             elif task['operation'] == 'move':
                 _move(self, task)
             elif task['operation'] == 'delete':
