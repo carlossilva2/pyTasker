@@ -3,8 +3,9 @@ import os
 import sys
 import shutil
 import os.path as Path
-from .types import *
 import Utils.operations as Operations
+import platform
+from .types import *
 from logging import Logger
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -22,6 +23,7 @@ class Parser:
         self.__change_relative_locations(default_location)
         self.__executed_tasks: 'List[Task]' = []
         self.__operation_stack = []
+        self.__supported_os = ['Windows'] #List of Tasker supported OSes
     
     def execute(self) -> None:
         self.task['tasks'] = sorted(self.task['tasks'], key=lambda d: d['step'])
@@ -33,6 +35,18 @@ class Parser:
         for op in self.__operation_stack:
             if not op.get_state():
                 self.logger.debug("Failed operation")
+    
+    def warn_user(self) -> None:
+        "Verifies if current OS is one of the allowed ones"
+        if platform.system() not in self.__supported_os:
+            ans = input(f"'{platform.system()}' is not part of the current supported OS list.\nAre you sure you want to continue? Y/n\n")
+            if ans.lower() == 'y':
+                pass
+            elif ans.lower() == 'n':
+                sys.exit(0)
+            else:
+                self.logger.error("Answer not allowed. Aborting...")
+                sys.exit(1)
 
     def __execute(self, task: Task) -> bool:
         try:

@@ -3,6 +3,7 @@ import sys
 import shutil
 from Utils.types import Task
 from logging import Logger
+from tqdm import tqdm
 
 class Copy:
 
@@ -39,7 +40,7 @@ class Copy:
 
     def __execute(self, files: 'list[str]') -> None:
         "Copy files execution action"
-        for f in files:
+        for f in tqdm(files):
             ori_path = f if self.task['subfolders'] == True else f"{self.task['origin']}/{f}"
             self.affected_files.append(ori_path)
             shutil.copyfile(f"{ori_path}", f"{self.task['destination']}/{self.context._get_file_name(f)}")
@@ -80,23 +81,34 @@ class Delete:
 
     def rollback(self) -> None:
         pass
-    
+
     def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
         self.__internal_state = state
     
     def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
         return self.__internal_state
 
 class Zip:
 
     def __init__(self) -> None:
-        self.affected_files = []
+        self.affected_files: list[str] = []
+        self.__internal_state = True #Faulty execution flag
 
     def execute(self) -> None:
         pass
 
     def rollback(self) -> None:
         pass
+
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
+        self.__internal_state = state
+    
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        return self.__internal_state
 
 class Command:
 

@@ -12,6 +12,7 @@ if __name__ == '__main__':
     print(f"Tasker V{__version__}")
     if len(args) > 0:
         P = Parser(args[0], logger)
+        P.warn_user()
         P.execute()
     else:
         logger.error('No Instruction Set Provided')

@@ -1,0 +1,14 @@
+Create a CLI invocable application
+    - Must do a config step before first run
+    - Config creates a config file in root dir
+        * Must have following settings
+            # InstructionSet default location
+            # Add here more settings
+    - Must have a command to create new InstructionSet on Default location
+    - Must have a run command to run an InstructionSet
+    - Somehow allow for flag system
+        * Use flags for no Output or something like that
+        * Flag for creating a log file
+        * Flag for dynamic display (or not) of the current task's progress
+        * Flag for disabling OS not supported warning
+    - An interactible InstructionSet builder?? (Probably not)
