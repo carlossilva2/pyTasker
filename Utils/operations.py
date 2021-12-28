@@ -1,13 +1,37 @@
 import os
 import sys
 import shutil
-from Utils.types import Task
+from Utils.types import Task, ParserType
 from logging import Logger
 from tqdm import tqdm
+from Utils.inspector import implements
 
+class Operation:
+    "Skeleton class for creating other, more complex Operations"
+
+    __internal_state: bool
+
+    def execute(self) -> None:
+        pass
+    
+    def rollback(self) -> None:
+        pass
+    
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        pass
+
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
+        pass
+
+@implements(Operation)
 class Copy:
+    "Copy Action"
+    
+    __annotations__ = ["Copy Action"]
 
-    def __init__(self, ctx, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -23,7 +47,7 @@ class Copy:
             self.__execute(_files)
         else:
             shutil.copyfile(f"{self.task['origin']}/{self.task['target']}", f"{self.task['destination']}/{self.task['target']}")
-        self.logger.debug("Test")
+        #self.logger.debug("Test")
 
     def rollback(self) -> None:
         for file in self.affected_files:
@@ -46,19 +70,54 @@ class Copy:
             shutil.copyfile(f"{ori_path}", f"{self.task['destination']}/{self.context._get_file_name(f)}")
 
 class Move:
+    "Move Action"
 
-    def __init__(self) -> None:
-        self.affected_files = []
+    __annotations__ = ["Move Action"]
+
+    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+        self.context = ctx #Parser Context
+        self.task = task #Current assigned Task
+        self.logger = logger
+        self.affected_files: list[str] = []
+        self.__internal_state = True #Faulty execution flag
 
     def execute(self) -> None:
-        pass
+        files = self.context._get_all_file_paths(self.task['origin']) if self.task['subfolders'] == True else os.listdir(self.task['origin'])
+        if self.task['target'] == '*':
+            self.__execute(files)
+        elif '*' in self.task['target']:
+            _files = [_ for _ in files if self.context._get_file_name(_).endswith(self.task['target'].split('.')[1])]
+            self.__execute(_files)
+        else:
+            shutil.copyfile(f"{self.task['origin']}/{self.task['target']}", f"{self.task['destination']}/{self.task['target']}")
 
     def rollback(self) -> None:
-        pass
+        for file in self.affected_files:
+            file_name = self.context._get_file_name(file)
+            shutil.move(f"{self.task['destination']}/{file_name}", f"{self.task['origin']}/{file_name}")
 
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
+        self.__internal_state = state
+    
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        return self.__internal_state
+    
+    def __execute(self, files: 'list[str]') -> None:
+        "Move files execution action"
+        for f in tqdm(files):
+            ori_path = f if self.task['subfolders'] == True else f"{self.task['origin']}/{f}"
+            self.affected_files.append(ori_path)
+            shutil.move(f"{ori_path}", f"{self.task['destination']}/{self.context._get_file_name(f)}")
+
+@implements(Operation)
 class Delete:
+    "Delete Action"
 
-    def __init__(self, ctx, task: Task, logger: Logger) -> None:
+    __annotations__ = ["Delete Action"]
+
+    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -80,7 +139,7 @@ class Delete:
             os.remove(_)
 
     def rollback(self) -> None:
-        pass
+        self.logger.warn("No rollback support for Delete Action")
 
     def set_state(self, state: bool) -> None:
         "Sets the state for the Internal Fault flag"
@@ -90,9 +149,16 @@ class Delete:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
+@implements(Operation)
 class Zip:
+    "Delete Action"
 
-    def __init__(self) -> None:
+    __annotations__ = ["Delete Action"]
+
+    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+        self.context = ctx #Parser Context
+        self.task = task #Current assigned Task
+        self.logger = logger
         self.affected_files: list[str] = []
         self.__internal_state = True #Faulty execution flag
 

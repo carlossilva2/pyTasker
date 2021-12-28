@@ -32,8 +32,11 @@ class Parser:
                 self.logger.debug(f"Task \"{task['name']}\" - OK")
             else:
                 self.logger.error(f"Task \"{task['name']}\" - ERROR")
-        for op in self.__operation_stack:
-            if not op.get_state():
+        #Reverse Operation Stack
+        #Do this to use rollback feature on a reverse order
+        self.__operation_stack.reverse()
+        for operation in self.__operation_stack:
+            if not operation.get_state():
                 self.logger.debug("Failed operation")
     
     def warn_user(self) -> None:
@@ -57,7 +60,10 @@ class Parser:
                 self.__operation_stack.append(c)
                 #_copy(self, task)
             elif task['operation'] == 'move':
-                _move(self, task)
+                m = Operations.Move(self, task, self.logger)
+                m.execute()
+                self.__operation_stack.append(m)
+                #_move(self, task)
             elif task['operation'] == 'delete':
                 _delete(self, task)
             elif task['operation'] == 'zip':

@@ -1,4 +1,5 @@
 from typing import TypedDict, List, Literal
+from logging import Logger
 
 #Structure definitions
 OP_INSTRUCTION = ['name', 'description', 'tasks']
@@ -31,3 +32,35 @@ class InstructionSet(TypedDict):
     name: str
     description: str
     tasks: List[Task]
+
+class ParserType:
+
+    def execute(self, task: str, logger: Logger, default_location: str) -> None:
+        pass
+    
+    def warn_user(self) -> None:
+        pass
+
+    def __execute(self, task: Task) -> bool:
+        pass
+
+    def __check_destination_path(self, task: Task) -> None:
+        pass
+
+    def __analyse_keys(self) -> 'tuple[bool, str, str, str]':
+        pass
+
+    def __optional_parameters(self) -> None:
+        pass
+
+    def _get_all_file_paths(self, directory: str) -> 'List[str]':
+        pass
+
+    def _get_file_name(self, p: str) -> str:
+        pass
+
+    def __change_relative_locations(self, home: str) -> None:
+        pass
+
+    def _get_step_reference(self, task: Task) -> Task:
+        pass
