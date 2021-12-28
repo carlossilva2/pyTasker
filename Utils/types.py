@@ -8,11 +8,12 @@ OP_TASK = ['name', 'step', 'operation']
 #Operation Key values
 OP_COPY = ['target', 'origin', 'destination', 'subfolders']
 OP_MOVE = ['target', 'origin', 'destination']
+OP_COMMAND = ['target', 'origin', 'destination']
 OP_DELETE = ['target', '!destination']
 OP_ZIP = ['target', 'rename', '!deflate', '!destination']
 
 #Available Operations
-OPERATIONS = ['copy', 'zip', 'move', 'delete']
+OPERATIONS = ['copy', 'zip', 'move', 'delete', 'command']
 LIST_OPERATIONS = Literal['copy', 'zip', 'move', 'delete']
 
 #Structure Definition for task
@@ -63,4 +64,26 @@ class ParserType:
         pass
 
     def _get_step_reference(self, task: Task) -> Task:
+        pass
+
+class OperationType:
+    "Skeleton class for creating other, more complex Operations"
+
+    __internal_state: bool
+    task: Task
+    context: ParserType
+    logger: Logger
+
+    def execute(self) -> None:
+        pass
+    
+    def rollback(self) -> None:
+        pass
+    
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        pass
+
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
         pass

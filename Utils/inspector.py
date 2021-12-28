@@ -24,7 +24,7 @@ def verify_methods(interface_cls, cls):
             )
 
 
-def verify_properties(interface_cls, cls):
+def verify_properties(interface_cls, cls) -> None:
     prop_attrs = dict(fget='getter', fset='setter', fdel='deleter')
     for name, prop in inspect.getmembers(interface_cls, inspect.isdatadescriptor):
         cls_prop = getattr(cls, name, None)
@@ -36,7 +36,7 @@ def verify_properties(interface_cls, cls):
                     .format(cls.__name__, prop_attrs[attr], name, interface_cls.__name__)
                 )
 
-def verify_attributes(interface_cls, cls):
+def verify_attributes(interface_cls, cls) -> None:
     interface_attributes = get_attributes(interface_cls)
     cls_attributes = get_attributes(cls)
     for missing_attr in (interface_attributes - cls_attributes):
@@ -46,6 +46,6 @@ def verify_attributes(interface_cls, cls):
         )
 
 
-def get_attributes(cls):
+def get_attributes(cls) -> set[str]:
     boring = dir(type('dummy', (object,), {}))
     return set(item[0] for item in inspect.getmembers(cls) if item[0] not in boring and not callable(item[1]))

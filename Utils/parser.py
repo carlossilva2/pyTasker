@@ -1,13 +1,11 @@
 import json
 import os
 import sys
-import shutil
 import os.path as Path
 import Utils.operations as Operations
 import platform
 from .types import *
 from logging import Logger
-from zipfile import ZipFile, ZIP_DEFLATED
 
 class Parser:
 
@@ -22,7 +20,7 @@ class Parser:
         self.logger = logger
         self.__change_relative_locations(default_location)
         self.__executed_tasks: 'List[Task]' = []
-        self.__operation_stack = []
+        self.__operation_stack: list[OperationType] = []
         self.__supported_os = ['Windows'] #List of Tasker supported OSes
     
     def execute(self) -> None:
@@ -37,7 +35,7 @@ class Parser:
         self.__operation_stack.reverse()
         for operation in self.__operation_stack:
             if not operation.get_state():
-                self.logger.debug("Failed operation")
+                operation.rollback()
     
     def warn_user(self) -> None:
         "Verifies if current OS is one of the allowed ones"
@@ -56,23 +54,30 @@ class Parser:
             self.__check_destination_path(task)
             if task['operation'] == 'copy':
                 c = Operations.Copy(self, task, self.logger)
-                c.execute()
                 self.__operation_stack.append(c)
-                #_copy(self, task)
+                c.execute()
             elif task['operation'] == 'move':
                 m = Operations.Move(self, task, self.logger)
-                m.execute()
                 self.__operation_stack.append(m)
-                #_move(self, task)
+                m.execute()
             elif task['operation'] == 'delete':
-                _delete(self, task)
+                d = Operations.Delete(self, task, self.logger)
+                self.__operation_stack.append(d)
+                d.execute()
             elif task['operation'] == 'zip':
-                _zip(self, task)
+                z = Operations.Zip(self, task, self.logger)
+                self.__operation_stack.append(z)
+                z.execute()
+            elif task['operation'] == 'command':
+                command = Operations.Command(self, task, self.logger)
+                self.__operation_stack.append(command)
+                command.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
             return True
         except Exception as e:
+            self.__operation_stack[-1].set_state(False)
             return False
     
     def __check_destination_path(self, task: Task) -> None:
@@ -148,60 +153,3 @@ class Parser:
             self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
             raise Exception()
         return self.__executed_tasks[step_index]
-
-
-#OPERATIONS
-
-def _copy(ctx: Parser, task: Task) -> None:
-    if task['target'] == '*':
-        files = ctx._get_all_file_paths(task['origin']) if task['subfolders'] == True else os.listdir(task['origin'])
-        for f in files:
-            ori_path = f if task['subfolders'] == True else f"{task['origin']}/{f}"
-            shutil.copyfile(f"{ori_path}", f"{task['destination']}/{ctx._get_file_name(f)}")
-    elif '*' in task['target']:
-        all_files = ctx._get_all_file_paths(task['origin']) if task['subfolders'] == True else os.listdir(task['origin'])
-        files = [_ for _ in all_files if ctx._get_file_name(_).endswith(task['target'].split('.')[1])]
-        for f in files:
-            ori_path = f if task['subfolders'] == True else f"{task['origin']}/{f}"
-            shutil.copyfile(f"{ori_path}", f"{task['destination']}/{ctx._get_file_name(f)}")
-    else:
-        shutil.copyfile(f"{task['origin']}/{task['target']}", f"{task['destination']}/{task['target']}")
-
-def _move(ctx: Parser, task: Task) -> None:
-    pass
-
-def _delete(ctx: Parser, task: Task) -> None:
-    fp = []
-    if task['target'] == '*':
-        fp = ctx._get_all_file_paths(task['destination']) if task['subfolders'] == True else os.listdir(task['destination'])
-    elif '*' in task['target']:
-        all_files = ctx._get_all_file_paths(task['destination']) if task['subfolders'] == True else os.listdir(task['destination'])
-        fp = [_ for _ in all_files if ctx._get_file_name(_).endswith(task['target'].split('.')[1])]
-    elif task['target'].startswith('$'):
-        step = ctx._get_step_reference(task)
-        all_files = ctx._get_all_file_paths(step['destination'])
-        fp = [_ for _ in all_files if ctx._get_file_name(_).endswith(step['target'].split('.')[1])]
-    for _ in fp:
-        os.remove(_)
-
-def _zip(ctx: Parser, task: Task) -> None:
-    fp = []
-    files = []
-    if task['target'].startswith('$'):
-        step = ctx._get_step_reference(task)
-        fp = ctx._get_all_file_paths(step['destination']) if task['subfolders'] == True else [f"{step['destination']}/{_}" for _ in os.listdir(step['destination'])]
-        files = []#TODO: [_ for _ in os.listdir(step['destination']) if not os.path.isfile(_)  f"{step['destination']}/{_}"]
-    else:
-        if task['target'] == '*':
-            fp = ctx._get_all_file_paths(task['destination']) if task['subfolders'] == True else [f"{task['destination']}/{_}" for _ in os.listdir(task['destination'])]
-            files = os.listdir(task['destination'])
-    with ZipFile(f"{task['destination']}/{task['rename']}.zip", 'w', ZIP_DEFLATED) as zip:
-        for i, _ in enumerate(fp):
-            if "deflate" in task.keys():
-                if task['deflate'] == True:
-                    zip.write(_, files[i])
-                else:
-                    zip.write(_)
-            else:
-                zip.write(_)
-        zip.close()
