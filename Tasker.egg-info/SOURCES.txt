@@ -1,0 +1,14 @@
+README.md
+setup.py
+Tasker/__init__.py
+Tasker/__main__.py
+Tasker/inspector.py
+Tasker/operations.py
+Tasker/parser.py
+Tasker/tasker.py
+Tasker/types.py
+Tasker.egg-info/PKG-INFO
+Tasker.egg-info/SOURCES.txt
+Tasker.egg-info/dependency_links.txt
+Tasker.egg-info/entry_points.txt
+Tasker.egg-info/top_level.txt

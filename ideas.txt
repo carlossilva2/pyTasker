@@ -1,10 +1,10 @@
 Create a CLI invocable application
-    - Must do a config step before first run
-    - Config creates a config file in root dir
+    - Must do a config step before first run (✔)
+    - Config creates a config file in root dir (✔)
         * Must have following settings
-            # InstructionSet default location
+            # InstructionSet default location (✔)
             # Add here more settings
-    - Must have a command to create new InstructionSet on Default location
+    - Must have a command to create new InstructionSet on Default location (✔)
     - Must have a run command to run an InstructionSet
     - Somehow allow for flag system
         * Use flags for no Output or something like that

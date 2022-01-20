@@ -3,9 +3,14 @@ import sys
 import shutil
 #from tqdm import tqdm
 from logging import Logger
-from Utils.inspector import implements
-from Utils.types import Task, ParserType, OperationType
+from .inspector import implements
+from .types import Task, ParserType, OperationType
 from zipfile import ZipFile, ZIP_DEFLATED
+
+def get_file_name(p: str) -> str:
+    if '/' in p:
+        return p.split('/')[-1]
+    return p
 
 @implements(OperationType)
 class Copy:
@@ -25,7 +30,7 @@ class Copy:
         if self.task['target'] == '*':
             self.__execute(files)
         elif '*' in self.task['target']:
-            _files = [_ for _ in files if self.context._get_file_name(_).endswith(self.task['target'].split('.')[1])]
+            _files = [_ for _ in files if get_file_name(_).endswith(self.task['target'].split('.')[1])]
             self.__execute(_files)
         else:
             shutil.copyfile(f"{self.task['origin']}/{self.task['target']}", f"{self.task['destination']}/{self.task['target']}")
@@ -33,7 +38,7 @@ class Copy:
 
     def rollback(self) -> None:
         for file in self.affected_files:
-            file_name = self.context._get_file_name(file)
+            file_name = get_file_name(file)
             shutil.copyfile(f"{self.task['destination']}/{file_name}", f"{self.task['origin']}/{file_name}")
         self.logger.warn(f"Rolled back \"{self.task['name']}\" task")
 
@@ -50,7 +55,7 @@ class Copy:
         for f in files:
             ori_path = f if self.task['subfolders'] == True else f"{self.task['origin']}/{f}"
             self.affected_files.append(ori_path)
-            shutil.copyfile(f"{ori_path}", f"{self.task['destination']}/{self.context._get_file_name(f)}")
+            shutil.copyfile(f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}")
 
 @implements(OperationType)
 class Move:
@@ -70,14 +75,14 @@ class Move:
         if self.task['target'] == '*':
             self.__execute(files)
         elif '*' in self.task['target']:
-            _files = [_ for _ in files if self.context._get_file_name(_).endswith(self.task['target'].split('.')[1])]
+            _files = [_ for _ in files if get_file_name(_).endswith(self.task['target'].split('.')[1])]
             self.__execute(_files)
         else:
             shutil.copyfile(f"{self.task['origin']}/{self.task['target']}", f"{self.task['destination']}/{self.task['target']}")
 
     def rollback(self) -> None:
         for file in self.affected_files:
-            file_name = self.context._get_file_name(file)
+            file_name = get_file_name(file)
             shutil.move(f"{self.task['destination']}/{file_name}", f"{self.task['origin']}/{file_name}")
         self.logger.warn(f"Rolled back \"{self.task['name']}\" task")
 
@@ -94,7 +99,7 @@ class Move:
         for f in files:
             ori_path = f if self.task['subfolders'] == True else f"{self.task['origin']}/{f}"
             self.affected_files.append(ori_path)
-            shutil.move(f"{ori_path}", f"{self.task['destination']}/{self.context._get_file_name(f)}")
+            shutil.move(f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}")
 
 @implements(OperationType)
 class Delete:
@@ -115,11 +120,11 @@ class Delete:
             fp = self.context._get_all_file_paths(self.task['destination']) if self.task['subfolders'] == True else os.listdir(self.task['destination'])
         elif '*' in self.task['target']:
             all_files = self.context._get_all_file_paths(self.task['destination']) if self.task['subfolders'] == True else os.listdir(self.task['destination'])
-            fp = [_ for _ in all_files if self.context._get_file_name(_).endswith(self.task['target'].split('.')[1])]
+            fp = [_ for _ in all_files if get_file_name(_).endswith(self.task['target'].split('.')[1])]
         elif self.task['target'].startswith('$'):
             step = self.context._get_step_reference(self.task)
             all_files = self.context._get_all_file_paths(step['destination'])
-            fp = [_ for _ in all_files if self.context._get_file_name(_).endswith(step['target'].split('.')[1])]
+            fp = [_ for _ in all_files if get_file_name(_).endswith(step['target'].split('.')[1])]
         for _ in fp:
             os.remove(_)
 

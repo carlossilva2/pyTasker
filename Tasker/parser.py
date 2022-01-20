@@ -2,24 +2,26 @@ import json
 import os
 import sys
 import os.path as Path
-import Utils.operations as Operations
+from .operations import *
 import platform
 from .types import *
 from logging import Logger
+from typing import Union, List
+from webbrowser import open as FileOpener
 
 class Parser:
 
-    def __init__(self, task: str, logger: Logger, default_location: str = Path.expanduser('~')) -> None:
-        self.task: InstructionSet = json.load(open(f'./Tasks/{task}.json','r'))
+    def __init__(self, task: str, logger: Logger) -> None:
+        self.__first_execution_routine()
+        self.task: InstructionSet = json.load(open(f'{self.default_location}/{task}.tasker.json','r'))
         analysis = self.__analyse_keys()
         if not analysis[0]:
             logger.error(f'{analysis[3]} \"{analysis[1]}\" in {analysis[2]}')
             sys.exit(1)
         self.__optional_parameters()
-        self.home = default_location
         self.logger = logger
-        self.__change_relative_locations(default_location)
-        self.__executed_tasks: 'List[Task]' = []
+        self.__change_relative_locations(Path.expanduser('~'))
+        self.__executed_tasks: List[Task] = []
         self.__operation_stack: list[OperationType] = []
         self.__supported_os = ['Windows'] #List of Tasker supported OSes
     
@@ -53,23 +55,23 @@ class Parser:
         try:
             self.__check_destination_path(task)
             if task['operation'] == 'copy':
-                c = Operations.Copy(self, task, self.logger)
+                c = Copy(self, task, self.logger)
                 self.__operation_stack.append(c)
                 c.execute()
             elif task['operation'] == 'move':
-                m = Operations.Move(self, task, self.logger)
+                m = Move(self, task, self.logger)
                 self.__operation_stack.append(m)
                 m.execute()
             elif task['operation'] == 'delete':
-                d = Operations.Delete(self, task, self.logger)
+                d = Delete(self, task, self.logger)
                 self.__operation_stack.append(d)
                 d.execute()
             elif task['operation'] == 'zip':
-                z = Operations.Zip(self, task, self.logger)
+                z = Zip(self, task, self.logger)
                 self.__operation_stack.append(z)
                 z.execute()
             elif task['operation'] == 'command':
-                command = Operations.Command(self, task, self.logger)
+                command = Command(self, task, self.logger)
                 self.__operation_stack.append(command)
                 command.execute()
             else:
@@ -94,7 +96,7 @@ class Parser:
         if destination not in os.listdir(f"{destination_parent}"):
             os.mkdir(f"{task['destination']}")
     
-    def __analyse_keys(self) -> 'tuple[bool, str, str, str]':
+    def __analyse_keys(self) -> 'tuple[bool, Union[str,None], Union[str,None], Union[str,None]]':
         "Verify if the structure of the Instruction Set is defined correctly"
         for key in OP_INSTRUCTION:
             if key not in self.task.keys():
@@ -128,15 +130,10 @@ class Parser:
 
     def _get_all_file_paths(self, directory: str) -> 'List[str]':
         file_paths = []
-        for root, directories, files in os.walk(directory):
+        for root, _, files in os.walk(directory):
             for filename in files:
                 file_paths.append(Path.join(root, filename).replace('\\','/'))
         return file_paths
-    
-    def _get_file_name(self, p: str) -> str:
-        if '/' in p:
-            return p.split('/')[-1]
-        return p
     
     def __change_relative_locations(self, home: str) -> None:
         for task in self.task['tasks']:
@@ -153,3 +150,49 @@ class Parser:
             self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
             raise Exception()
         return self.__executed_tasks[step_index]
+    
+    def __first_execution_routine(self) -> None:
+        "Create the initial configuration and setup necessary directories"
+        def create_initial_config(p: str) -> None:
+            with open(f"{p}/.tasker/config.json",'w') as config:
+                json.dump({
+                    "current_location": p,
+                    "default_location": p
+                }, config, indent=4)
+                config.close()
+        root_path = Path.expanduser('~')
+        root_folders = os.listdir(root_path)
+        if '.tasker' not in root_folders:
+            os.mkdir(f"{root_path}/.tasker")
+            os.mkdir(f"{root_path}/.tasker/Tasks")
+            create_initial_config(root_path)
+        else:
+            tasker_folder = os.listdir(f"{Path.expanduser('~')}/.tasker")
+            if 'config.json' not in tasker_folder:
+                create_initial_config(root_path)
+        self.default_location = f"{root_path}/.tasker/Tasks"
+
+    # Static Methods
+    
+    @staticmethod
+    def list_all_tasks() -> List[str]:
+        "Lists all Task templates created"
+        return [_.replace('.tasker.json', '') for _ in os.listdir(f"{Path.expanduser('~')}/.tasker/Tasks")]
+    
+    @staticmethod
+    def create_new_task(file_name:str, name: str, description: str) -> InstructionSet:
+        i: InstructionSet = {
+            'name': name,
+            'description': description,
+            'tasks': [
+                
+            ]
+        }
+        with open(f"{Path.expanduser('~')}/.tasker/Tasks/{file_name}.tasker.json", 'w') as instruction_set:
+            json.dump(i, instruction_set, indent=4)
+            instruction_set.close()
+        return i
+    
+    @staticmethod
+    def open_file_for_edit(file: str) -> None:
+        FileOpener(f"{Path.expanduser('~')}/.tasker/Tasks/{file}.tasker.json")
