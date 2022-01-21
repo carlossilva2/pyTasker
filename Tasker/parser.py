@@ -36,12 +36,12 @@ class Parser:
         #Do this to use rollback feature on a reverse order
         self.__operation_stack.reverse()
         for operation in self.__operation_stack:
-            if not operation.get_state():
+            if not operation.get_state() and '-No-Rollback' not in os.environ:
                 operation.rollback()
     
     def warn_user(self) -> None:
         "Verifies if current OS is one of the allowed ones"
-        if platform.system() not in self.__supported_os:
+        if platform.system() not in self.__supported_os and ('-No-Warning' not in os.environ):
             ans = input(f"'{platform.system()}' is not part of the current supported OS list.\nAre you sure you want to continue? Y/n\n")
             if ans.lower() == 'y':
                 pass
@@ -173,14 +173,37 @@ class Parser:
         self.default_location = f"{root_path}/.tasker/Tasks"
 
     # Static Methods
+
+    @staticmethod
+    def do_config() -> None:
+        "Create the initial configuration and setup necessary directories"
+        def create_initial_config(p: str) -> None:
+            with open(f"{p}/.tasker/config.json",'w') as config:
+                json.dump({
+                    "current_location": p,
+                    "default_location": p
+                }, config, indent=4)
+                config.close()
+        root_path = Path.expanduser('~')
+        root_folders = os.listdir(root_path)
+        if '.tasker' not in root_folders:
+            os.mkdir(f"{root_path}/.tasker")
+            os.mkdir(f"{root_path}/.tasker/Tasks")
+            create_initial_config(root_path)
+        else:
+            tasker_folder = os.listdir(f"{Path.expanduser('~')}/.tasker")
+            if 'config.json' not in tasker_folder:
+                create_initial_config(root_path)
     
     @staticmethod
     def list_all_tasks() -> List[str]:
         "Lists all Task templates created"
+        Parser.do_config()
         return [_.replace('.tasker.json', '') for _ in os.listdir(f"{Path.expanduser('~')}/.tasker/Tasks")]
     
     @staticmethod
     def create_new_task(file_name:str, name: str, description: str) -> InstructionSet:
+        Parser.do_config()
         i: InstructionSet = {
             'name': name,
             'description': description,
@@ -195,4 +218,5 @@ class Parser:
     
     @staticmethod
     def open_file_for_edit(file: str) -> None:
+        Parser.do_config()
         FileOpener(f"{Path.expanduser('~')}/.tasker/Tasks/{file}.tasker.json")

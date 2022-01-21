@@ -2,6 +2,7 @@ README.md
 setup.py
 Tasker/__init__.py
 Tasker/__main__.py
+Tasker/cli.py
 Tasker/inspector.py
 Tasker/operations.py
 Tasker/parser.py

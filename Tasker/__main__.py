@@ -1,7 +1,6 @@
 import sys
 import logging
 
-from Tasker.types import InstructionSet
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
 
@@ -23,6 +22,8 @@ General Options:
   -Name                     Task Human Readable Name flag.
   -File                     Task File Name flag.
   -Description              Description for Task template.
+  -No-Warning               <Add Description Here>.
+  -No-Rollback              <Add Description Here>.
 """
 def main() -> None: 
     args = sys.argv[1:]
@@ -31,6 +32,7 @@ def main() -> None:
     logger.setLevel(logging.DEBUG)
     #print(get_parsed_flags(args))
     if len(args) > 0:
+        flags = get_parsed_flags(args)
         if args[0] == 'list':
             for task in Parser.list_all_tasks():
                 print(f"   ➡ {task}")
@@ -39,17 +41,15 @@ def main() -> None:
             P.warn_user()
             P.execute()
         elif args[0] == 'edit' and len(args) >= 2:
-            f = get_parsed_flags(args)
-            if not check_flag_validity(f, 'create'):
+            if not check_flag_validity(flags, 'edit'):
                 logger.error('Flags were not constructed properly')
                 sys.exit(1)
-            Parser.open_file_for_edit(f['-File'])
+            Parser.open_file_for_edit(flags['-File'])
         elif args[0] == 'create':
-            f = get_parsed_flags(args)
-            if not check_flag_validity(f, 'create'):
+            if not check_flag_validity(flags, 'create'):
                 logger.error('Flags were not constructed properly')
                 sys.exit(1)
-            Parser.create_new_task(f['-File'], f['-Name'], f['-Description'])
+            Parser.create_new_task(flags['-File'], flags['-Name'], flags['-Description'])
         elif args[0] == '-version' or args[0] == '-v':
             print(f"Tasker V{__version__}")
         elif args[0] == '-help' or args[0] == '-h' or args[0] == 'help':

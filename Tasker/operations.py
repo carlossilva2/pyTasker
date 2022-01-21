@@ -1,10 +1,12 @@
 import os
-import sys
 import shutil
-#from tqdm import tqdm
 from logging import Logger
 from .inspector import implements
-from .types import Task, ParserType, OperationType
+from .types import (
+    Task, 
+    ParserType as Parser, 
+    OperationType as Operation
+)
 from zipfile import ZipFile, ZIP_DEFLATED
 
 def get_file_name(p: str) -> str:
@@ -12,13 +14,16 @@ def get_file_name(p: str) -> str:
         return p.split('/')[-1]
     return p
 
-@implements(OperationType)
+@implements(Operation)
 class Copy:
     "Copy Action"
     
-    __annotations__ = ["Copy Action"]
+    __annotations__ = {
+        "name": "Copy Action",
+        "intent": "Create a duplicate of a specific file on a different location"
+    }
 
-    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -57,13 +62,16 @@ class Copy:
             self.affected_files.append(ori_path)
             shutil.copyfile(f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}")
 
-@implements(OperationType)
+@implements(Operation)
 class Move:
     "Move Action"
 
-    __annotations__ = ["Move Action"]
+    __annotations__ = {
+        "name": "Move Action",
+        "intent": "Move file/files from one location to another"
+    }
 
-    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -101,13 +109,16 @@ class Move:
             self.affected_files.append(ori_path)
             shutil.move(f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}")
 
-@implements(OperationType)
+@implements(Operation)
 class Delete:
     "Delete Action"
 
-    __annotations__ = ["Delete Action"]
+    __annotations__ = {
+        "name": "Delete Action",
+        "intent": "Delete file/files from the system"
+    }
 
-    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -139,13 +150,16 @@ class Delete:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-@implements(OperationType)
+@implements(Operation)
 class Zip:
     "Zip Action"
 
-    __annotations__ = ["Zip Action"]
+    __annotations__ = {
+        "name": "Zip Action",
+        "intent": "Group files into one zipped folder"
+    }
 
-    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -190,13 +204,16 @@ class Zip:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-@implements(OperationType)
+@implements(Operation)
 class Command:
     "Command Action"
 
-    __annotations__ = ["Command Action"]
+    __annotations__ = {
+        "name": "Command Action",
+        "intent": "Execute CLI commands"
+    }
 
-    def __init__(self, ctx: ParserType, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
         self.context = ctx #Parser Context
         self.task = task #Current assigned Task
         self.logger = logger
@@ -216,3 +233,9 @@ class Command:
     def get_state(self) -> bool:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
+
+#Add Input Action
+#Params-> Question
+
+#Add Encrypt Action
+#Params-> Algorithm, What
