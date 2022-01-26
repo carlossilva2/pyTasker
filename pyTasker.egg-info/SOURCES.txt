@@ -1,0 +1,17 @@
+README.md
+setup.py
+Tasker/__init__.py
+Tasker/__main__.py
+Tasker/cli.py
+Tasker/inspector.py
+Tasker/operations.py
+Tasker/parser.py
+Tasker/tasker.py
+Tasker/types.py
+pyTasker.egg-info/PKG-INFO
+pyTasker.egg-info/SOURCES.txt
+pyTasker.egg-info/dependency_links.txt
+pyTasker.egg-info/entry_points.txt
+pyTasker.egg-info/top_level.txt
+static/Copy PDFs.png
+static/__init__.py
