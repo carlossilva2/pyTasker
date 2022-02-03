@@ -21,6 +21,7 @@ Classifier: Topic :: Software Development
 Classifier: Typing :: Typed
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
+License-File: LICENSE
 
 # Tasker
 
@@ -36,6 +37,7 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
 - [Tasker](#tasker)
   - [Index](#index)
   - [Installation](#installation)
+  - [Reference System](#reference-system)
   - [Key Features](#key-features)
     - [Copy Action](#copy-action)
     - [Zip Action](#zip-action)
@@ -57,6 +59,33 @@ There are 2 ways of installation:
 
 ```console
 $ pip install pyTasker
+```
+
+## Reference System
+
+Tasker includes a reference system which allows the user to access values from a previous step and/or value, like the [Input Action](#input-action). References are a way to simplify the InstructionSets.
+
+To get started with references simply use `$<Step Number>` or `$<Step Number>.<Field Name>` on a field. If no additional data is appended to the reference, like `$0`, the system will fallback to the key where reference was invoked.
+
+Example:
+
+```json
+{
+    "name": "<Step Name>",
+    "step": 0,
+    "operation": "input",
+    "question": "<Question Value>"
+},
+{
+    "name": "<Step Name>",
+    "step": 1,
+    "operation": "zip",
+    "target": "*",
+    "rename": "$0.value",
+    "!deflate": true,
+    "!destination": "<Destination Path>",
+    "subfolders": true
+}
 ```
 
 ## Key Features
@@ -86,6 +115,7 @@ For extra information use `tasker help`
     "operation": "zip",
     "target": "<Location Path>",
     "rename": "<Name of Zip file>",
+    "!destination": "<Name of Zip file>",
     "!deflate": false, //When Zip is created should the Folder structure be with current system Path or just the pretended folder
     "subfolders": true //Should Tasker also include subfolders inside main location
 }
