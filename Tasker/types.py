@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Literal
+from typing import TypedDict, List, Literal, Dict
 from logging import Logger
 
 #Structure definitions
@@ -11,10 +11,12 @@ OP_MOVE = ['target', 'origin', 'destination']
 OP_COMMAND = ['target', 'origin', 'destination']
 OP_DELETE = ['target', '!destination']
 OP_ZIP = ['target', 'rename', '!deflate', '!destination']
+OP_INPUT = ['question']
+OP_ECHO = ['value']
 
 #Available Operations
-OPERATIONS = ['copy', 'zip', 'move', 'delete', 'command']
-LIST_OPERATIONS = Literal['copy', 'zip', 'move', 'delete']
+OPERATIONS = ['copy', 'zip', 'move', 'delete', 'command', 'input', 'echo']
+LIST_OPERATIONS = Literal['copy', 'zip', 'move', 'delete', 'input', 'echo']
 
 #Structure Definition for task
 class Task(TypedDict):
@@ -27,6 +29,8 @@ class Task(TypedDict):
     rename: str
     subfolders: bool
     deflate: bool
+    question: str
+    value: str
 
 #Structure Definition for instruction_set
 class InstructionSet(TypedDict):
@@ -36,10 +40,17 @@ class InstructionSet(TypedDict):
 
 class ParserType:
 
+    system: str
+    task: InstructionSet
+    logger: Logger
+
     def execute(self, task: str, logger: Logger, default_location: str) -> None:
         pass
     
     def warn_user(self) -> None:
+        pass
+
+    def abort(self, reason: str) -> None:
         pass
 
     def __execute(self, task: Task) -> bool:
@@ -63,7 +74,7 @@ class ParserType:
     def __change_relative_locations(self, home: str) -> None:
         pass
 
-    def _get_step_reference(self, task: Task) -> Task:
+    def _get_step_reference(self, task: Task, ref: str, get_from_operation: bool = False) -> Task:
         pass
 
 class OperationType:
@@ -73,6 +84,7 @@ class OperationType:
     task: Task
     context: ParserType
     logger: Logger
+    _type: str
 
     def execute(self) -> None:
         pass
@@ -87,3 +99,13 @@ class OperationType:
     def set_state(self, state: bool) -> None:
         "Sets the state for the Internal Fault flag"
         pass
+
+DESTINATION_CHECK_MAP: Dict[str, bool] = {
+    "copy": True,
+    "delete": True,
+    "echo": False,
+    "input": False,
+    "move": True,
+    "registry": False,
+    "zip": True
+}

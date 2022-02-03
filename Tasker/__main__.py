@@ -4,7 +4,7 @@ import logging
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
 
-__version__ = '0.0.1'
+__version__ = '0.2.0'
 
 HELP_TEXT = """
 Usage:
@@ -22,15 +22,14 @@ General Options:
   -Name                     Task Human Readable Name flag.
   -File                     Task File Name flag.
   -Description              Description for Task template.
-  -No-Warning               <Add Description Here>.
-  -No-Rollback              <Add Description Here>.
+  -No-Warning               Removes the verification of the Users OS.
+  -No-Rollback              Prevents Tasker to perform Rollback in case of Task failure.
 """
 def main() -> None: 
     args = sys.argv[1:]
     logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s][%(asctime)s] → %(message)s',datefmt='%H:%M:%S')
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    #print(get_parsed_flags(args))
     if len(args) > 0:
         flags = get_parsed_flags(args)
         if args[0] == 'list':
@@ -57,7 +56,6 @@ def main() -> None:
         else:
             logger.error('Check Help for command syntax')
     else:
-        #logger.error('No Instruction Set Provided')
         print(HELP_TEXT)
     sys.exit(1)
 

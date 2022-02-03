@@ -35,12 +35,19 @@ class Parser:
         #Reverse Operation Stack
         #Do this to use rollback feature on a reverse order
         self.__operation_stack.reverse()
+        tick = True
         for operation in self.__operation_stack:
             if not operation.get_state() and '-No-Rollback' not in os.environ:
+                if tick:
+                    print()
+                    print("--------------  Rollbacks  --------------")
+                    print()
+                    tick = False
                 operation.rollback()
     
     def warn_user(self) -> None:
         "Verifies if current OS is one of the allowed ones"
+        self.system = platform.system()
         if platform.system() not in self.__supported_os and ('-No-Warning' not in os.environ):
             ans = input(f"'{platform.system()}' is not part of the current supported OS list.\nAre you sure you want to continue? Y/n\n")
             if ans.lower() == 'y':
@@ -50,10 +57,14 @@ class Parser:
             else:
                 self.logger.error("Answer not allowed. Aborting...")
                 sys.exit(1)
+    
+    def abort(self, reason: str) -> None:
+        self.logger.error(reason)
+        sys.exit(1)
 
     def __execute(self, task: Task) -> bool:
         try:
-            self.__check_destination_path(task)
+            self.__check_destination_path(task, DESTINATION_CHECK_MAP[task['operation']])
             if task['operation'] == 'copy':
                 c = Copy(self, task, self.logger)
                 self.__operation_stack.append(c)
@@ -74,6 +85,14 @@ class Parser:
                 command = Command(self, task, self.logger)
                 self.__operation_stack.append(command)
                 command.execute()
+            elif task['operation'] == 'input':
+                i = Input(self, task, self.logger)
+                self.__operation_stack.append(i)
+                i.execute()
+            elif task['operation'] == 'echo':
+                e = Echo(self, task, self.logger)
+                self.__operation_stack.append(e)
+                e.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
@@ -82,19 +101,45 @@ class Parser:
             self.__operation_stack[-1].set_state(False)
             return False
     
-    def __check_destination_path(self, task: Task) -> None:
+    def __check_destination_path(self, task: Task, needs_path_check: bool = True) -> None:
         "Check destination path if requested end folder is present. If not, create it."
-        if 'destination' not in task.keys():
-            if task['target'].startswith('$'):
-                ref = self._get_step_reference(task)
-                task['destination'] = ref['destination']
-            else:
-                self.logger.debug("Destination parameter is not present")
-                raise Exception()
-        destination = task['destination'].split('/')[-1]
-        destination_parent = '/'.join(_ for _ in task['destination'].split('/')[:-1])
-        if destination not in os.listdir(f"{destination_parent}"):
-            os.mkdir(f"{task['destination']}")
+        if needs_path_check:
+            if 'destination' in task.keys():
+                if '$' in task['destination']:
+                    splitted_path = task['destination'].split("/")[-1]
+                    if '.' in splitted_path:
+                        _ = splitted_path.split(".")
+                        ref = self._get_step_reference(task, _[0])
+                        task['destination'] = ref[_[1]]
+                    else:
+                        ref = self._get_step_reference(task, task['destination'])
+                        task['destination'] = ref['destination']
+            if 'origin' in task.keys():
+                if '$' in task['origin']:
+                    splitted_path = task['origin'].split("/")[-1]
+                    if '.' in splitted_path:
+                        _ = splitted_path.split(".")
+                        ref = self._get_step_reference(task, _[0])
+                        task['origin'] = ref[_[1]]
+                    else:
+                        ref = self._get_step_reference(task, task['destination'])
+                        task['destination'] = ref['destination']
+            if 'destination' not in task.keys():
+                if task['target'].startswith('$'):
+                    if '.' in task['target']:
+                        _ = task['target'].split(".")
+                        ref = self._get_step_reference(task, _[0])
+                        task['destination'] = ref[_[1]]
+                    else:
+                        ref = self._get_step_reference(task, task['target'])
+                        task['destination'] = ref['destination']
+                else:
+                    self.logger.debug("Destination parameter is not present")
+                    raise Exception()
+            destination = task['destination'].split('/')[-1]
+            destination_parent = '/'.join(_ for _ in task['destination'].split('/')[:-1])
+            if destination not in os.listdir(f"{destination_parent}"):
+                os.mkdir(f"{task['destination']}")
     
     def __analyse_keys(self) -> 'tuple[bool, Union[str,None], Union[str,None], Union[str,None]]':
         "Verify if the structure of the Instruction Set is defined correctly"
@@ -143,13 +188,20 @@ class Parser:
                 if 'origin' in task.keys() and ":" not in task['origin']:
                     task['origin'] = f"{home}/{task['origin']}".replace('\\','/')
     
-    def _get_step_reference(self, task: Task) -> Task:
+    def _get_step_reference(self, task: Task, ref: str, get_from_operation: bool = False) -> Union[Task, dict]:
         #get step in reference
-        step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(task['target'].replace('$',''))), None)
+        step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(ref.replace('$',''))), None)
         if step_index == None:
             self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
             raise Exception()
-        return self.__executed_tasks[step_index]
+        vars = {}
+        if get_from_operation:
+            pass
+        for _ in self.__operation_stack:
+            if _.task["step"] == step_index:
+                vars = _.__dict__
+                break
+        return dict(self.__executed_tasks[step_index], **vars)
     
     def __first_execution_routine(self) -> None:
         "Create the initial configuration and setup necessary directories"
