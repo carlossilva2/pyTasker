@@ -1,12 +1,12 @@
 Metadata-Version: 2.1
 Name: pyTasker
-Version: 0.2.0
+Version: 0.2.1
 Summary: Run pipelines on your own computer for better automation
-Home-page: https://gitlab.com/carlossilva2/tasker
+Home-page: https://github.com/carlossilva2/pyTasker
 Author: Carlos Silva
 Author-email: carlos.miguel.silva@protonmail.com
 License: GPLv3
-Project-URL: Source, https://gitlab.com/carlossilva2/tasker
+Project-URL: Source, https://github.com/carlossilva2/pyTasker
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Environment :: Console

@@ -22,8 +22,8 @@ setup(
     description = "Run pipelines on your own computer for better automation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version = "0.2.0",
-    url="https://gitlab.com/carlossilva2/tasker",
+    version = "0.2.1",
+    url="https://github.com/carlossilva2/pyTasker",
     packages = find_packages(),
     license="GPLv3",
     classifiers=[
@@ -52,6 +52,6 @@ setup(
         "static": ["*"]
     },
     project_urls={
-        "Source": "https://gitlab.com/carlossilva2/tasker"
+        "Source": "https://github.com/carlossilva2/pyTasker"
     }
 )

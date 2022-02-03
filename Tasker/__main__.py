@@ -4,7 +4,7 @@ import logging
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 HELP_TEXT = """
 Usage:
