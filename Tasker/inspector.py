@@ -19,21 +19,23 @@ def verify_methods(interface_cls, cls):
         cls_signature = inspect.signature(cls_method) if cls_method else None
         if cls_signature != signature:
             raise NotImplementedError(
-                "'{}' must implement method '{}({})' defined in interface '{}'"
-                .format(cls.__name__, name, signature, interface_cls.__name__)
+                f"'{cls.__name__}' must implement method '{name}({signature})' defined in interface '{interface_cls.__name__}'"
             )
 
 
 def verify_properties(interface_cls, cls) -> None:
-    prop_attrs = dict(fget='getter', fset='setter', fdel='deleter')
+    prop_attrs = dict(
+        fget='getter', 
+        fset='setter', 
+        fdel='deleter'
+    )
     for name, prop in inspect.getmembers(interface_cls, inspect.isdatadescriptor):
         cls_prop = getattr(cls, name, None)
         for attr in prop_attrs:
             # instanceof doesn't work for class function comparison
             if type(getattr(prop, attr, None)) != type(getattr(cls_prop, attr, None)):
                 raise NotImplementedError(
-                    "'{}' must implement a {} for property '{}' defined in interface '{}'"  # flake8: noqa
-                    .format(cls.__name__, prop_attrs[attr], name, interface_cls.__name__)
+                    f"'{cls.__name__}' must implement a {prop_attrs[attr]} for property '{name}' defined in interface '{interface_cls.__name__}'"  # flake8: noqa
                 )
 
 def verify_attributes(interface_cls, cls) -> None:
@@ -41,8 +43,7 @@ def verify_attributes(interface_cls, cls) -> None:
     cls_attributes = get_attributes(cls)
     for missing_attr in (interface_attributes - cls_attributes):
         raise NotImplementedError(
-            "'{}' must have class attribute '{}' defined in interface '{}'"
-            .format(cls.__name__, missing_attr, interface_cls.__name__)
+            f"'{cls.__name__}' must have class attribute '{missing_attr}' defined in interface '{interface_cls.__name__}'"
         )
 
 
