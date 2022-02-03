@@ -1,11 +1,14 @@
 # Tasker
 
+<a href="https://github.com/carlossilva2/pyTasker/blob/main/LICENSE" target="blank"><img src="https://img.shields.io/github/license/carlossilva2/pytasker?style=round-square&color=green" alt="pyTasker License" /></a>
 [![Downloads](https://pepy.tech/badge/pytasker/month)](https://pepy.tech/project/pytasker)
 [![Supported Versions](https://img.shields.io/pypi/pyversions/pytasker.svg)](https://pypi.org/project/pytasker)
+<a href="https://www.buymeacoffee.com/cmsilva" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="23" width="100" style="border-radius:5px" />
 
 You know [Ansible](https://github.com/ansible/ansible) right? Well, this works kind of the same way, except you create tasks to automate your local computer.
 
 How? You're in luck. Just create an InstructionSet (you can use the CLI command `tasker create` to get started) and let your life get easier!
+
 
 ## Index
 
@@ -24,12 +27,13 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
   - [Roadmap](#roadmap)
     - [Actions in Pipeline](#actions-in-pipeline)
     - [General Improvements](#general-improvements)
+  - [Support](#support)
 
 ## Installation
 
 There are 2 ways of installation:
 
-  1. Via source files available at [Gitlab](https://gitlab.com/carlossilva2/tasker).
+  1. Via source files available at [GitHub](https://github.com/carlossilva2/pyTasker).
   2. Using Pip
 
 ```console
@@ -152,8 +156,8 @@ For extra information use `tasker help`
 
 ## Usage
 
-![Copy Action](https://gitlab.com/carlossilva2/tasker/-/raw/main/static/Copy%20PDFs.png)
-![Complex Action](https://gitlab.com/carlossilva2/tasker/-/raw/main/static/Copy%20PDFs%20then%20zip.png)
+![Copy Action](https://raw.githubusercontent.com/carlossilva2/pyTasker/main/static/Copy%20PDFs.png)
+![Complex Action](https://raw.githubusercontent.com/carlossilva2/pyTasker/main/static/Copy%20PDFs%20then%20zip.png)
 
 ## Roadmap
 
@@ -169,3 +173,7 @@ This is a project I'm working on my free time, however I have some new Actions i
 ### General Improvements
 
 - Change reference system
+
+## Support
+
+[![Buy me a Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/cmsilva)
