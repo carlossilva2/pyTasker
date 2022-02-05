@@ -93,11 +93,16 @@ class Parser:
                 e = Echo(self, task, self.logger)
                 self.__operation_stack.append(e)
                 e.execute()
+            elif task['operation'] == 'request':
+                r = Request(self, task, self.logger)
+                self.__operation_stack.append(r)
+                r.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
             return True
         except Exception as e:
+            #print(e.with_traceback())
             self.__operation_stack[-1].set_state(False)
             return False
     

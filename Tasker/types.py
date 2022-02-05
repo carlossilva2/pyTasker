@@ -9,14 +9,15 @@ OP_TASK = ['name', 'step', 'operation']
 OP_COPY = ['target', 'origin', 'destination', 'subfolders']
 OP_MOVE = ['target', 'origin', 'destination']
 OP_COMMAND = ['target', 'origin', 'destination']
-OP_DELETE = ['target', '!destination']
+OP_DELETE = ['target', 'destination']
 OP_ZIP = ['target', 'rename', '!deflate', '!destination']
 OP_INPUT = ['question']
 OP_ECHO = ['value']
+OP_REQUEST = ['endpoint', 'method', '!body', '!headers']
 
 #Available Operations
-OPERATIONS = ['copy', 'zip', 'move', 'delete', 'command', 'input', 'echo']
-LIST_OPERATIONS = Literal['copy', 'zip', 'move', 'delete', 'input', 'echo']
+OPERATIONS = ['copy', 'zip', 'move', 'delete', 'command', 'input', 'echo', 'request']
+LIST_OPERATIONS = Literal['copy', 'zip', 'move', 'delete', 'input', 'echo', 'request']
 
 #Structure Definition for task
 class Task(TypedDict):
@@ -31,6 +32,8 @@ class Task(TypedDict):
     deflate: bool
     question: str
     value: str
+    endpoint: str
+    method: Literal['get', 'post', 'delete', 'put']
 
 #Structure Definition for instruction_set
 class InstructionSet(TypedDict):
@@ -107,5 +110,6 @@ DESTINATION_CHECK_MAP: Dict[str, bool] = {
     "input": False,
     "move": True,
     "registry": False,
+    "request": False,
     "zip": True
 }

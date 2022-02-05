@@ -94,7 +94,7 @@ For extra information use `tasker help`
     "operation": "zip",
     "target": "<Location Path>",
     "rename": "<Name of Zip file>",
-    "!destination": "<Name of Zip file>",
+    "!destination": "<Path for storing Zip file>",
     "!deflate": false, //When Zip is created should the Folder structure be with current system Path or just the pretended folder
     "subfolders": true //Should Tasker also include subfolders inside main location
 }
@@ -109,7 +109,8 @@ For extra information use `tasker help`
     "name": "<Name of Step>",
     "step": 0,
     "operation": "delete",
-    "target": "<File(s) or File Type>" //Can use location + file name/type
+    "destination": "<Location for deletion>",
+    "target": "<File(s) or File Type>" //file name/type
 }
 ```
 
