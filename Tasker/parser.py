@@ -2,8 +2,9 @@ import json
 import os
 import sys
 import os.path as Path
-from .operations import *
 import platform
+import chalk
+from .operations import *
 from .types import *
 from logging import Logger
 from typing import Union, List
@@ -29,9 +30,9 @@ class Parser:
         self.task['tasks'] = sorted(self.task['tasks'], key=lambda d: d['step'])
         for task in self.task['tasks']:
             if self.__execute(task):
-                self.logger.debug(f"Task \"{task['name']}\" - OK")
+                self.logger.debug(f"Task \"{task['name']}\" - {chalk.green('OK')}")
             else:
-                self.logger.error(f"Task \"{task['name']}\" - ERROR")
+                self.logger.error(f"Task \"{task['name']}\" - {chalk.red('ERROR')}")
         #Reverse Operation Stack
         #Do this to use rollback feature on a reverse order
         self.__operation_stack.reverse()

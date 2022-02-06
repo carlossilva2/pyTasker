@@ -46,7 +46,8 @@ setup(
         ]
     },
     install_requires = [
-        "requests"
+        "requests",
+        "pychalk"
     ],
     package_data={
     },

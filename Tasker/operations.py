@@ -1,7 +1,7 @@
 import os
 import shutil
 import requests
-import json
+import chalk
 from logging import Logger, getLogger, WARNING
 from .inspector import implements
 from .types import (
@@ -388,7 +388,7 @@ class Echo:
     
     def execute(self) -> None:
         value = self.task['value']
-        self.logger.debug(f"Output of \"{self.task['name']}\" Task ➡ {value}")
+        self.logger.debug(f"Output of \"{self.task['name']}\" Task ➡ {chalk.yellow(value)}")
 
     
     def rollback(self) -> None:
@@ -436,22 +436,30 @@ class Request:
     
     def execute(self) -> None:
         verb = self.task['method']
+        res = None
         if verb == 'get':
-            self.response = requests.get(self.task['endpoint']).json()
+            res = requests.get(self.task['endpoint']).json()
         elif verb == 'post':
-            self.response = requests.post(
+            res = requests.post(
                 self.task['endpoint'], 
-                data=self.task['body'] if 'body' in self.task.keys() else None,
+                json=self.task['body'] if 'body' in self.task.keys() else None,
                 headers=self.task['headers'] if 'headers' in self.task.keys() else None
             ).json()
         elif verb == 'delete':
-            self.response = requests.delete(
+            res = requests.delete(
                 self.task['endpoint'], 
-                data=self.task['body'] if 'body' in self.task.keys() else None,
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
+        elif verb == 'put':
+            res = requests.put(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
                 headers=self.task['headers'] if 'headers' in self.task.keys() else None
             ).json()
         else:
             self.set_state(False)
+        self.response = res if res != None else {}
     
     def rollback(self) -> None:
         self.logger.warn("No rollback support for Echo Action")

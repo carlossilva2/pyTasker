@@ -1,5 +1,6 @@
 import sys
 import logging
+import chalk
 
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
@@ -27,7 +28,7 @@ General Options:
 """
 def main() -> None: 
     args = sys.argv[1:]
-    logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s][%(asctime)s] → %(message)s',datefmt='%H:%M:%S')
+    logging.basicConfig(level=logging.DEBUG, format=f'[{chalk.blue("%(levelname)s")}] → %(message)s',datefmt='%H:%M:%S')
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     if len(args) > 0:
