@@ -1,6 +1,7 @@
 import sys
 import logging
 import chalk
+import click
 
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
@@ -26,6 +27,7 @@ General Options:
   -No-Warning               Removes the verification of the Users OS.
   -No-Rollback              Prevents Tasker to perform Rollback in case of Task failure.
 """
+
 def main() -> None: 
     args = sys.argv[1:]
     logging.basicConfig(level=logging.DEBUG, format=f'[{chalk.blue("%(levelname)s")}] → %(message)s',datefmt='%H:%M:%S')
