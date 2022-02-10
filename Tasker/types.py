@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Literal, Dict
+from typing import TypedDict, List, Literal, Dict, Union, Any, Tuple
 from logging import Logger
 
 #Structure definitions
@@ -34,6 +34,8 @@ class Task(TypedDict):
     value: str
     endpoint: str
     method: Literal['get', 'post', 'delete', 'put']
+    body: Union[str, Dict[str, Any], None]
+    headers: Union[str, Dict[str, Any], None]
 
 #Structure Definition for instruction_set
 class InstructionSet(TypedDict):
@@ -62,13 +64,13 @@ class ParserType:
     def __check_destination_path(self, task: Task) -> None:
         pass
 
-    def __analyse_keys(self) -> 'tuple[bool, str, str, str]':
+    def __analyse_keys(self) -> Tuple[bool, str, str, str]:
         pass
 
     def __optional_parameters(self) -> None:
         pass
 
-    def _get_all_file_paths(self, directory: str) -> 'List[str]':
+    def _get_all_file_paths(self, directory: str) -> List[str]:
         pass
 
     def _get_file_name(self, p: str) -> str:
@@ -77,7 +79,7 @@ class ParserType:
     def __change_relative_locations(self, home: str) -> None:
         pass
 
-    def _get_step_reference(self, task: Task, ref: str, get_from_operation: bool = False) -> Task:
+    def _get_step_reference(self, task: Task, ref: str) -> Task:
         pass
 
 class OperationType:

@@ -194,15 +194,13 @@ class Parser:
                 if 'origin' in task.keys() and ":" not in task['origin']:
                     task['origin'] = f"{home}/{task['origin']}".replace('\\','/')
     
-    def _get_step_reference(self, task: Task, ref: str, get_from_operation: bool = False) -> Union[Task, dict]:
+    def _get_step_reference(self, task: Task, ref: str) -> Union[Task, dict]:
         #get step in reference
         step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(ref.replace('$',''))), None)
         if step_index == None:
             self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
             raise Exception()
         vars = {}
-        if get_from_operation:
-            pass
         for _ in self.__operation_stack:
             if _.task["step"] == step_index:
                 vars = _.__dict__

@@ -1,3 +1,10 @@
+# 0.3.0 (2022-02-XX)
+
+*What's new*
+
+- New Request Action
+- 
+
 # 0.2.1 (2022-02-03)
 
 ### Highlights

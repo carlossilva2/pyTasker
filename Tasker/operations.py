@@ -438,7 +438,11 @@ class Request:
         verb = self.task['method']
         res = None
         if verb == 'get':
-            res = requests.get(self.task['endpoint']).json()
+            res = requests.get(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
         elif verb == 'post':
             res = requests.post(
                 self.task['endpoint'], 
