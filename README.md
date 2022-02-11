@@ -167,6 +167,8 @@ For extra information use `tasker help`
 }
 ```
 
+---
+
 > `Step` parameter is the order Tasker will pick up the tasks
 
 > Parameters starting with "!" are optional parameters
