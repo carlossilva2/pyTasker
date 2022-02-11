@@ -2,8 +2,9 @@ import json
 import os
 import sys
 import os.path as Path
-from .operations import *
 import platform
+import chalk
+from .operations import *
 from .types import *
 from logging import Logger
 from typing import Union, List
@@ -12,6 +13,7 @@ from webbrowser import open as FileOpener
 class Parser:
 
     def __init__(self, task: str, logger: Logger) -> None:
+        self.warn_user()
         self.__first_execution_routine()
         self.task: InstructionSet = json.load(open(f'{self.default_location}/{task}.tasker.json','r'))
         analysis = self.__analyse_keys()
@@ -29,9 +31,9 @@ class Parser:
         self.task['tasks'] = sorted(self.task['tasks'], key=lambda d: d['step'])
         for task in self.task['tasks']:
             if self.__execute(task):
-                self.logger.debug(f"Task \"{task['name']}\" - OK")
+                self.logger.debug(f"Task \"{task['name']}\" - {chalk.green('OK')}")
             else:
-                self.logger.error(f"Task \"{task['name']}\" - ERROR")
+                self.logger.error(f"Task \"{task['name']}\" - {chalk.red('ERROR')}")
         #Reverse Operation Stack
         #Do this to use rollback feature on a reverse order
         self.__operation_stack.reverse()
@@ -93,11 +95,16 @@ class Parser:
                 e = Echo(self, task, self.logger)
                 self.__operation_stack.append(e)
                 e.execute()
+            elif task['operation'] == 'request':
+                r = Request(self, task, self.logger)
+                self.__operation_stack.append(r)
+                r.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
             return True
         except Exception as e:
+            #print(e.with_traceback())
             self.__operation_stack[-1].set_state(False)
             return False
     
@@ -188,15 +195,13 @@ class Parser:
                 if 'origin' in task.keys() and ":" not in task['origin']:
                     task['origin'] = f"{home}/{task['origin']}".replace('\\','/')
     
-    def _get_step_reference(self, task: Task, ref: str, get_from_operation: bool = False) -> Union[Task, dict]:
+    def _get_step_reference(self, task: Task, ref: str) -> Union[Task, dict]:
         #get step in reference
         step_index = next((index for (index, d) in enumerate(self.__executed_tasks) if d['step'] == int(ref.replace('$',''))), None)
         if step_index == None:
             self.logger.error(f"Reference in Task \"{task['name']}\" is either not been executed or doesn't exist.")
             raise Exception()
         vars = {}
-        if get_from_operation:
-            pass
         for _ in self.__operation_stack:
             if _.task["step"] == step_index:
                 vars = _.__dict__

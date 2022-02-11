@@ -1,6 +1,8 @@
 import os
 import shutil
-from logging import Logger
+import requests
+import chalk
+from logging import Logger, getLogger, WARNING
 from .inspector import implements
 from .types import (
     Task, 
@@ -386,8 +388,82 @@ class Echo:
     
     def execute(self) -> None:
         value = self.task['value']
-        self.logger.debug(f"Output of \"{self.task['name']}\" Task ➡ {value}")
+        self.logger.debug(f"Output of \"{self.task['name']}\" Task ➡ {chalk.yellow(value)}")
 
+    
+    def rollback(self) -> None:
+        self.logger.warn("No rollback support for Echo Action")
+
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
+        self.__internal_state = state
+    
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        return self.__internal_state
+    
+    def handle_references(self) -> None:
+        for key in self.task.keys():
+            if type(self.task[key]) == str and self.task[key].startswith('$'):
+                if '.' in self.task[key]:
+                    _ = self.task[key].split('.')
+                    step = self.context._get_step_reference(self.task, _[0])
+                    self.task[key] = step[_[1]]
+                else:
+                    step = self.context._get_step_reference(self.task, self.task[key])
+                    self.task[key] = step[key]
+
+@implements(Operation)
+class Request:
+    "Request Action"
+
+    __annotations__ = {
+        "name": "Request Action",
+        "intent": "Make API Calls and store JSON value"
+    }
+
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
+        getLogger('requests').setLevel(WARNING)
+        getLogger('urllib3').setLevel(WARNING)
+        self.context = ctx #Parser Context
+        self.task = task #Current assigned Task
+        self.logger = logger
+        self.affected_files: list[str] = []
+        self.__internal_state = True #Faulty execution flag
+        self._type = 'request'
+        self.handle_references()
+        self.response = None
+    
+    def execute(self) -> None:
+        verb = self.task['method']
+        res = None
+        if verb == 'get':
+            res = requests.get(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
+        elif verb == 'post':
+            res = requests.post(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
+        elif verb == 'delete':
+            res = requests.delete(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
+        elif verb == 'put':
+            res = requests.put(
+                self.task['endpoint'], 
+                json=self.task['body'] if 'body' in self.task.keys() else None,
+                headers=self.task['headers'] if 'headers' in self.task.keys() else None
+            ).json()
+        else:
+            self.set_state(False)
+        self.response = res if res != None else {}
     
     def rollback(self) -> None:
         self.logger.warn("No rollback support for Echo Action")

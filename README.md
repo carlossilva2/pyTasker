@@ -23,6 +23,7 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
     - [Move Action](#move-action)
     - [Input Action](#input-action)
     - [Echo Action](#echo-action)
+    - [Request Action](#request-action)
   - [Usage](#usage)
   - [Roadmap](#roadmap)
     - [Actions in Pipeline](#actions-in-pipeline)
@@ -149,6 +150,24 @@ For extra information use `tasker help`
     "value": "<Value to output to console>"
 }
 ```
+
+### Request Action
+
+> This action stores the Response in the `response` variable
+
+```json
+{
+    "name": "<Name of Step>",
+    "step": 0,
+    "operation": "request",
+    "endpoint": "<URL to query>",
+    "method": "<get | post | put | delete>", //Must be only 1 option
+    "!body": {}, //Optional parameter
+    "!headers": {} //Optional Parameter
+}
+```
+
+---
 
 > `Step` parameter is the order Tasker will pick up the tasks
 
