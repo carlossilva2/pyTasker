@@ -14,6 +14,7 @@ pyTasker.egg-info/PKG-INFO
 pyTasker.egg-info/SOURCES.txt
 pyTasker.egg-info/dependency_links.txt
 pyTasker.egg-info/entry_points.txt
+pyTasker.egg-info/requires.txt
 pyTasker.egg-info/top_level.txt
 static/Copy PDFs then zip.png
 static/Copy PDFs.png

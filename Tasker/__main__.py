@@ -1,10 +1,11 @@
 import sys
 import logging
+import chalk
 
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 HELP_TEXT = """
 Usage:
@@ -25,9 +26,10 @@ General Options:
   -No-Warning               Removes the verification of the Users OS.
   -No-Rollback              Prevents Tasker to perform Rollback in case of Task failure.
 """
+
 def main() -> None: 
     args = sys.argv[1:]
-    logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s][%(asctime)s] → %(message)s',datefmt='%H:%M:%S')
+    logging.basicConfig(level=logging.DEBUG, format=f'[{chalk.blue("%(levelname)s")}] → %(message)s',datefmt='%H:%M:%S')
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     if len(args) > 0:
@@ -37,7 +39,6 @@ def main() -> None:
                 print(f"   ➡ {task}")
         elif args[0] == 'execute' and len(args) >= 2:
             P = Parser(args[1], logger)
-            P.warn_user()
             P.execute()
         elif args[0] == 'edit' and len(args) >= 2:
             if not check_flag_validity(flags, 'edit'):

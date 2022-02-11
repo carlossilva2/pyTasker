@@ -38,6 +38,9 @@ def check_flag_validity(f: dict[str, Union[str, None]], op: str) -> bool:
     """
     operation_wd: List[str] = eval(f"{op.upper()}_WITH_DATA_FLAGS")
     operation_nd: List[str] = eval(f"{op.upper()}_NO_DATA_FLAGS")
+    for wd in operation_wd:
+        if wd not in f.keys():
+            return False
     for _ in f.keys():
         if _ in operation_wd and f[_] == None:
             return False

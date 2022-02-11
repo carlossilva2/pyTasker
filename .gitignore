@@ -4,3 +4,8 @@ Tasks/
 .vscode/
 deploy.*
 dist/
+test.py
+build/
+PY39/
+PY310/
+.mypy_cache/
