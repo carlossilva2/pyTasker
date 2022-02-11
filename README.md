@@ -23,6 +23,7 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
     - [Move Action](#move-action)
     - [Input Action](#input-action)
     - [Echo Action](#echo-action)
+    - [Request Action](#request-action)
   - [Usage](#usage)
   - [Roadmap](#roadmap)
     - [Actions in Pipeline](#actions-in-pipeline)
@@ -94,7 +95,7 @@ For extra information use `tasker help`
     "operation": "zip",
     "target": "<Location Path>",
     "rename": "<Name of Zip file>",
-    "!destination": "<Path for storing Zip file>",
+    "!destination": "<Name of Zip file>",
     "!deflate": false, //When Zip is created should the Folder structure be with current system Path or just the pretended folder
     "subfolders": true //Should Tasker also include subfolders inside main location
 }
@@ -109,8 +110,7 @@ For extra information use `tasker help`
     "name": "<Name of Step>",
     "step": 0,
     "operation": "delete",
-    "destination": "<Location for deletion>",
-    "target": "<File(s) or File Type>" //file name/type
+    "target": "<File(s) or File Type>" //Can use location + file name/type
 }
 ```
 
@@ -148,6 +148,22 @@ For extra information use `tasker help`
     "step": 0,
     "operation": "input",
     "value": "<Value to output to console>"
+}
+```
+
+### Request Action
+
+> This action stores the Response in the `response` variable
+
+```json
+{
+    "name": "<Name of Step>",
+    "step": 0,
+    "operation": "request",
+    "endpoint": "<URL to query>",
+    "method": "<get | post | put | delete>", //Must be only 1 option
+    "!body": {}, //Optional parameter
+    "!headers": {} //Optional Parameter
 }
 ```
 
