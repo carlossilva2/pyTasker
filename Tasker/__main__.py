@@ -1,7 +1,6 @@
 import sys
 import logging
 import chalk
-import click
 
 from .parser import Parser
 from .cli import get_parsed_flags, check_flag_validity
@@ -40,7 +39,6 @@ def main() -> None:
                 print(f"   ➡ {task}")
         elif args[0] == 'execute' and len(args) >= 2:
             P = Parser(args[1], logger)
-            P.warn_user()
             P.execute()
         elif args[0] == 'edit' and len(args) >= 2:
             if not check_flag_validity(flags, 'edit'):

@@ -3,7 +3,6 @@
 *What's new*
 
 - New Request Action
-- 
 
 # 0.2.1 (2022-02-03)
 

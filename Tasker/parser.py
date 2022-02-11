@@ -13,6 +13,7 @@ from webbrowser import open as FileOpener
 class Parser:
 
     def __init__(self, task: str, logger: Logger) -> None:
+        self.warn_user()
         self.__first_execution_routine()
         self.task: InstructionSet = json.load(open(f'{self.default_location}/{task}.tasker.json','r'))
         analysis = self.__analyse_keys()
