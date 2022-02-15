@@ -27,7 +27,7 @@ def test_edit_flag_system():
 
 
 def test_create_partial_flag_system():
-    sys.argv = ["", "create", "-File=aws"]
+    sys.argv = ["", "create", "--File aws"]
     with pytest.raises(SystemExit):
         __main__.main()
 
