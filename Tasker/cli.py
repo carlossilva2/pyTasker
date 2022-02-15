@@ -1,52 +1,85 @@
+import argparse
+import logging
 from os import environ as env
-from typing import List, Union
 
-CREATE_NO_DATA_FLAGS = ["-NO"]
-CREATE_WITH_DATA_FLAGS = ["-Name", "-Description", "-File"]
-EDIT_NO_DATA_FLAGS = ["-NO"]
-EDIT_WITH_DATA_FLAGS = ["-File"]
-EXECUTE_NO_DATA_FLAGS = ["-NO"]
-EXECUTE_WITH_DATA_FLAGS = []
-GENERAL_FLAG = ["-No-Warning", "-No-Rollback"]
+import chalk
 
 
-def get_flags(args: List[str]) -> List[str]:
-    return [_ for _ in args if _.startswith("-")]
+def get_logger() -> logging.Logger:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format=f'[{chalk.blue("%(levelname)s")}] → %(message)s',
+        datefmt="%H:%M:%S",
+    )
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    return logger
 
 
-def get_parsed_flags(args: List[str]) -> dict[str, Union[str, None]]:
-    flags = {}
-    argFlags = [_ for _ in args if _.startswith("-")]
-    for _ in argFlags:
-        if "=" in _:
-            f = _.split("=")
-            flags[f[0]] = f[1]
-        else:
-            flags[_] = None
-        # Check Flags for global settings
-        if _ in GENERAL_FLAG:
-            if _ == "-No-Warning":
-                env["-No-Warning"] = "1"
-            if _ == "-No-Rollback":
-                env["-No-Rollback"] = "1"
-    return flags
+def get_args(operation: list[str], version: str) -> argparse.Namespace:
+    "Create Argument parser for CLI use and return all the parsed args"
+    parser = argparse.ArgumentParser(
+        prog="pyTasker",
+        description="Run pipelines on your own computer for better automation",
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"%(prog)s v{version}"
+    )
 
+    parser.add_argument(
+        "action",
+        help="What action should Tasker perform",
+        choices=["list", "execute", "create", "edit"],
+    )
 
-def check_flag_validity(f: dict[str, Union[str, None]], op: str) -> bool:
-    """
-    Analyses the flag list sent for errors or missing parameters.
-    Params:
-        `f`: Parsed Flag List;
-        `op`: Current Operation being executed;
-    """
-    operation_wd: List[str] = eval(f"{op.upper()}_WITH_DATA_FLAGS")
-    operation_nd: List[str] = eval(f"{op.upper()}_NO_DATA_FLAGS")
-    for wd in operation_wd:
-        if wd not in f.keys():
-            return False
-    for _ in f.keys():
-        if _ in operation_wd and f[_] is None:
-            return False
-        if _ in operation_nd and f[_] is not None:
-            f[_] = None
-    return True
+    options = parser.add_argument_group("parameters")
+    options.add_argument(
+        "-i",
+        "--Instruction-Set",
+        type=str,
+        metavar="",
+        required=True if "execute" in operation else False,
+        help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list",
+    )
+    options.add_argument(
+        "-f",
+        "--File",
+        type=str,
+        metavar="",
+        required=True if ("create" in operation or "edit" in operation) else False,
+        help="Task File Name flag.",
+    )
+    options.add_argument(
+        "-n",
+        "--Name",
+        type=str,
+        metavar="",
+        required=True if "create" in operation else False,
+        help="Task Human Readable Name flag.",
+    )
+    options.add_argument(
+        "-d",
+        "--Description",
+        type=str,
+        metavar="",
+        required=True if "create" in operation else False,
+        help="Description for Task template.",
+    )
+    options.add_argument(
+        "-nw",
+        "--No-Warning",
+        action="store_true",
+        help="Removes the verification of the Users OS.",
+    )
+    options.add_argument(
+        "-nr",
+        "--No-Rollback",
+        action="store_true",
+        help="Prevents Tasker to perform Rollback in case of Task failure.",
+    )
+    args = parser.parse_args()
+    if args.No_Warning:
+        env["-No-Warning"] = "1"
+    if args.No_Rollback:
+        env["-No-Rollback"] = "1"
+    return args

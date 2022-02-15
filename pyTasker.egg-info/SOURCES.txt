@@ -1,5 +1,10 @@
+.gitignore
+.pre-commit-config.yaml
+CHANGELOG.md
 LICENSE
 README.md
+pyproject.toml
+requirements.txt
 setup.cfg
 setup.py
 Tasker/__init__.py
@@ -8,6 +13,7 @@ Tasker/cli.py
 Tasker/inspector.py
 Tasker/operations.py
 Tasker/parser.py
+Tasker/parser_test.py
 Tasker/regutils.py
 Tasker/types.py
 pyTasker.egg-info/PKG-INFO
