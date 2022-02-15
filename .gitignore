@@ -9,3 +9,4 @@ build/
 PY39/
 PY310/
 .mypy_cache/
+.pytest_cache/
