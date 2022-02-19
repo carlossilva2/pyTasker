@@ -15,6 +15,7 @@ Tasker/operations.py
 Tasker/parser.py
 Tasker/parser_test.py
 Tasker/regutils.py
+Tasker/templater.py
 Tasker/types.py
 pyTasker.egg-info/PKG-INFO
 pyTasker.egg-info/SOURCES.txt

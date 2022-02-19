@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Any, Dict, List, Literal, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
 
 # Structure definitions
 OP_INSTRUCTION = ["name", "description", "tasks"]
@@ -20,6 +20,68 @@ OPERATIONS = ["copy", "zip", "move", "delete", "command", "input", "echo", "requ
 LIST_OPERATIONS = Literal["copy", "zip", "move", "delete", "input", "echo", "request"]
 
 
+class Copy(TypedDict):
+    name: str
+    step: int
+    operation: Literal["copy"]
+    target: str
+    origin: str
+    destination: str
+    subfolders: bool
+
+
+class Move(TypedDict):
+    name: str
+    step: int
+    operation: Literal["move"]
+    target: str
+    origin: str
+    destination: str
+
+
+class Zip(TypedDict, total=False):
+    name: str
+    step: int
+    operation: Literal["zip"]
+    rename: str
+    target: str
+    subfolders: bool
+    destination: Optional[str]
+    deflate: Optional[bool]
+
+
+class Delete(TypedDict):
+    name: str
+    step: int
+    operation: Literal["delete"]
+    target: str
+    destination: str
+
+
+class Input(TypedDict):
+    name: str
+    step: int
+    operation: Literal["input"]
+    question: str
+
+
+class Echo(TypedDict):
+    name: str
+    step: int
+    operation: Literal["echo"]
+    value: str
+
+
+class Request(TypedDict, total=False):
+    name: str
+    step: int
+    operation: Literal["request"]
+    endpoint: str
+    method: Literal["get", "post", "delete", "put"]
+    body: Optional[Union[str, Dict[str, Any], None]]
+    headers: Optional[Union[str, Dict[str, Any], None]]
+
+
 # Structure Definition for task
 class Task(TypedDict):
     name: str
@@ -30,20 +92,20 @@ class Task(TypedDict):
     destination: str
     rename: str
     subfolders: bool
-    deflate: bool
+    deflate: Optional[bool]
     question: str
     value: str
     endpoint: str
     method: Literal["get", "post", "delete", "put"]
-    body: Union[str, Dict[str, Any], None]
-    headers: Union[str, Dict[str, Any], None]
+    body: Optional[Union[str, Dict[str, Any], None]]
+    headers: Optional[Union[str, Dict[str, Any], None]]
 
 
 # Structure Definition for instruction_set
 class InstructionSet(TypedDict):
     name: str
     description: str
-    tasks: List[Task]
+    tasks: List[Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request]]
 
 
 class ParserType:

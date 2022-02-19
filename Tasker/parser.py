@@ -195,7 +195,7 @@ class Parser:
             ][obj[1]]
             del self.task["tasks"][obj[0]][obj[1]]
 
-    def _get_all_file_paths(self, directory: str) -> "List[str]":
+    def _get_all_file_paths(self, directory: str) -> List[str]:
         file_paths = []
         for root, _, files in os.walk(directory):
             for filename in files:

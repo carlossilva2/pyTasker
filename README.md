@@ -110,7 +110,8 @@ For extra information use `tasker help`
     "name": "<Name of Step>",
     "step": 0,
     "operation": "delete",
-    "target": "<File(s) or File Type>" //Can use location + file name/type
+    "destinaton": "<Location to delete files>",
+    "target": "<File(s) or File Type>", //Can use location + file name/type
 }
 ```
 

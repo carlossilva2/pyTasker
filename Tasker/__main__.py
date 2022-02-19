@@ -4,6 +4,7 @@ import chalk
 
 from .cli import get_args, get_logger
 from .parser import Parser
+from .templater import ask_file_to_run, create_template
 
 __version__ = "0.4.0"
 
@@ -21,12 +22,20 @@ def main() -> None:
         for task in Parser.list_all_tasks():
             print(f"   {chalk.green('➡')} {task}")
     elif args.action == "execute":
-        P = Parser(args.Instruction_Set, logger)
-        P.execute()
+        ans = (
+            ask_file_to_run([*Parser.list_all_tasks(), "nevermind..."])
+            if args.Instruction_Set is None
+            else args.Instruction_Set
+        )
+        if ans != None:
+            P = Parser(ans, logger)
+            P.execute()
     elif args.action == "edit":
         Parser.open_file_for_edit(args.file)
     elif args.action == "create":
         Parser.create_new_task(args.f, args.n, args.d)
+    elif args.action == "templater":
+        create_template()
     else:
         logger.error("Check Help for command syntax")
 

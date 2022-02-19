@@ -29,7 +29,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
     parser.add_argument(
         "action",
         help="What action should Tasker perform",
-        choices=["list", "execute", "create", "edit"],
+        choices=["list", "execute", "create", "edit", "templater"],
     )
 
     options = parser.add_argument_group("parameters")
@@ -38,7 +38,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
         "--Instruction-Set",
         type=str,
         metavar="",
-        required=True if "execute" in operation else False,
+        required=False,  # True if "execute" in operation else False
         help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list",
     )
     options.add_argument(
