@@ -35,7 +35,7 @@ def main() -> None:
     elif args.action == "create":
         Parser.create_new_task(args.f, args.n, args.d)
     elif args.action == "templater":
-        create_template()
+        create_template(logger)
     else:
         logger.error("Check Help for command syntax")
 

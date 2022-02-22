@@ -1,8 +1,10 @@
 import json
 import os.path as Path
+from logging import Logger
 from typing import List, Union
 
 import questionary as qt
+from validators import ValidationFailure, url
 
 from .types import Copy, InstructionSet, Request
 
@@ -14,7 +16,7 @@ def ask_file_to_run(options: List[str]) -> Union[str, None]:
     return option if option != "Nevermind..." else None
 
 
-def create_template() -> None:
+def create_template(logger: Logger) -> None:
     copy_a = "Copy Action"
     zip_a = "Zip Action"
     delete_a = "Delete Action"
@@ -60,7 +62,11 @@ def create_template() -> None:
             no_break = False
         elif option == copy_a:
             instruction_set["tasks"].append(
-                create_copy_task(len(instruction_set["tasks"]))
+                create_copy_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == request_a:
+            instruction_set["tasks"].append(
+                create_request_task(len(instruction_set["tasks"]), logger)
             )
     save = qt.confirm("Do you want save?", qmark="📕", default=False).ask()
     print(instruction_set)
@@ -72,7 +78,7 @@ def create_template() -> None:
         )
 
 
-def create_copy_task(step: int) -> Copy:
+def create_copy_task(step: int, logger: Logger) -> Copy:
     ans: Copy = {
         "name": "",
         "step": step,
@@ -92,7 +98,7 @@ def create_copy_task(step: int) -> Copy:
     return ans
 
 
-def create_request_task(step: int) -> Request:
+def create_request_task(step: int, logger: Logger) -> Request:
     ans: Request = {
         "name": "",
         "step": step,
@@ -100,4 +106,40 @@ def create_request_task(step: int) -> Request:
         "endpoint": "",
         "method": "get",
     }
+    ans["name"] = qt.text("What's the name of the Task?", qmark="®").ask()
+    ans["method"] = qt.select(
+        "Select a type of request:",
+        choices=["get", "post", "delete", "put"],
+        qmark="®",
+    ).ask()
+    try:
+        u = qt.text("What's the endpoint URL?", qmark="®").ask()
+        if isinstance(url(u), ValidationFailure):
+            raise ValidationFailure(url, {"value": u, "public": False})
+        ans["endpoint"] = u
+    except ValidationFailure:
+        ans["endpoint"] = "https://jsonplaceholder.typicode.com/posts"
+        logger.error(
+            "Endpoint provided was not a valid URL. Using default URL, please modify file after completion."
+        )
+    body = qt.confirm("Do you want to send anything in the body?", qmark="®").ask()
+    if body:
+        try:
+            ans["body"] = json.loads(
+                qt.text(
+                    "What do you want to send (only accepts JSON strings)?", qmark="®"
+                ).ask()
+            )
+        except Exception:
+            logger.error("Value sent is not a valid JSON string")
+    headers = qt.confirm("Do you want to send anything in the headers?", qmark="®").ask()
+    if headers:
+        try:
+            ans["headers"] = json.loads(
+                qt.text(
+                    "What do you want to send (only accepts JSON strings)?", qmark="®"
+                ).ask()
+            )
+        except Exception:
+            logger.error("Value sent is not a valid JSON string")
     return ans

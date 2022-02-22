@@ -83,7 +83,7 @@ class Request(TypedDict, total=False):
 
 
 # Structure Definition for task
-class Task(TypedDict):
+class Task(TypedDict, total=False):
     name: str
     step: int
     operation: str

@@ -255,6 +255,7 @@ class Parser:
             if "config.json" not in tasker_folder:
                 create_initial_config(root_path)
         self.default_location = f"{root_path}/.tasker/Tasks"
+        # TODO: validate entry point for Starting Location on config file
 
     # Static Methods
 

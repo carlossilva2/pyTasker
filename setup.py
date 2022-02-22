@@ -42,7 +42,7 @@ setup(
     ],
     python_requires=">=3.8",
     entry_points={"console_scripts": ["tasker = Tasker.__main__:main"]},
-    install_requires=["requests", "pychalk", "questionary"],
+    install_requires=["requests", "pychalk", "questionary", "validators"],
     package_data={},
     project_urls={"Source": "https://github.com/carlossilva2/pyTasker"},
 )
