@@ -31,7 +31,7 @@ def main() -> None:
             P = Parser(ans, logger)
             P.execute()
     elif args.action == "edit":
-        Parser.open_file_for_edit(args.file)
+        Parser.open_file_for_edit(args.File)
     elif args.action == "create":
         Parser.create_new_task(args.f, args.n, args.d)
     elif args.action == "templater":

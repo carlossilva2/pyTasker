@@ -3,8 +3,9 @@ import winreg
 
 # import os.path as Path
 from os import listdir, remove
+from typing import Dict, List, Tuple
 
-ROOTS: dict[str, int] = {
+ROOTS: Dict[str, int] = {
     "classes-root": winreg.HKEY_CLASSES_ROOT,
     "current-user": winreg.HKEY_CURRENT_USER,
     "current-config": winreg.HKEY_CURRENT_CONFIG,
@@ -13,16 +14,16 @@ ROOTS: dict[str, int] = {
 }
 
 
-def parse_input(k: str):
+def parse_input(k: str) -> Tuple[int, List[str]]:
     if k == "":
         raise Exception("Cannot provide empty Registry Path")
     str_list = k.split(">")
     root: int = ROOTS[str_list[0]]
     str_list.pop(0)
-    return [root, [_ for _ in str_list if _ != ""]]
+    return (root, [_ for _ in str_list if _ != ""])
 
 
-""" def get_all_keys(root: str) -> List[str]:
+def get_all_keys(root: str) -> List[str]:
     keys = []
     i = 0
     try:
@@ -31,9 +32,9 @@ def parse_input(k: str):
             k = winreg.EnumKey(_, i)
             keys.append(k)
             i += 1
-    except Exception as e:
+    except Exception:
         pass
-    return keys """
+    return keys
 
 
 def create_key(path: str, key_name: str) -> None:
@@ -60,7 +61,7 @@ def get_key_value(path: str) -> str:
         return winreg.QueryValueEx(key, rf"{v}")[0]
 
 
-def backup(root: str, path: str, fname: str):
+def backup(root: str, path: str, fname: str) -> None:
     files = listdir(path)
     if f"{fname}.reg" in files:
         remove(f"{path}/{fname}.reg")

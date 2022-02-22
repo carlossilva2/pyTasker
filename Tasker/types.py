@@ -83,7 +83,7 @@ class Request(TypedDict, total=False):
 
 
 # Structure Definition for task
-class Task(TypedDict, total=False):
+class Task(TypedDict):
     name: str
     step: int
     operation: str
@@ -170,6 +170,11 @@ class OperationType:
     def set_state(self, state: bool) -> None:
         "Sets the state for the Internal Fault flag"
         pass
+
+
+class Settings(TypedDict):
+    current_location: str
+    default_location: str
 
 
 DESTINATION_CHECK_MAP: Dict[str, bool] = {

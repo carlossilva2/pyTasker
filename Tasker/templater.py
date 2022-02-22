@@ -1,22 +1,44 @@
 import json
 import os.path as Path
+from hashlib import md5
 from logging import Logger
+from time import time
 from typing import List, Union
 
 import questionary as qt
 from validators import ValidationFailure, url
 
-from .types import Copy, InstructionSet, Request
+from .types import *
+
+REFERENCES = []
 
 
 def ask_file_to_run(options: List[str]) -> Union[str, None]:
     option = qt.select(
         "Which InstructionSet do you want to execute?", choices=options, qmark="📁"
     ).ask()
-    return option if option != "Nevermind..." else None
+    return option if option != "nevermind..." else None
 
 
-def create_template(logger: Logger) -> None:
+def _create_text_or_autocomplete(
+    message: str, mark: str, choices: List[str]
+) -> qt.Question:
+    "Create a Text Question with/without Autocomplete based on the `choices`"
+    if len(choices) == 0:
+        return qt.text(message, qmark=mark)
+    return qt.autocomplete(message, choices=choices, qmark=mark)
+
+
+def _create_path_or_autocomplete(
+    message: str, mark: str, choices: List[str]
+) -> qt.Question:
+    "Create a Path Question with/without Autocomplete based on the `choices`"
+    if len(choices) == 0:
+        return qt.text(message, qmark=mark)
+    return qt.path(message, choices=choices, qmark=mark, only_directories=True)
+
+
+def create_template(logger: Logger) -> InstructionSet:
     copy_a = "Copy Action"
     zip_a = "Zip Action"
     delete_a = "Delete Action"
@@ -64,6 +86,26 @@ def create_template(logger: Logger) -> None:
             instruction_set["tasks"].append(
                 create_copy_task(len(instruction_set["tasks"]), logger)
             )
+        elif option == zip_a:
+            instruction_set["tasks"].append(
+                create_zip_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == delete_a:
+            instruction_set["tasks"].append(
+                create_delete_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == move_a:
+            instruction_set["tasks"].append(
+                create_move_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == input_a:
+            instruction_set["tasks"].append(
+                create_input_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == echo_a:
+            instruction_set["tasks"].append(
+                create_echo_task(len(instruction_set["tasks"]), logger)
+            )
         elif option == request_a:
             instruction_set["tasks"].append(
                 create_request_task(len(instruction_set["tasks"]), logger)
@@ -76,9 +118,11 @@ def create_template(logger: Logger) -> None:
             open(f"{Path.expanduser('~')}/.tasker/Tasks/{file_name}.tasker.json", "w"),
             indent=4,
         )
+    return instruction_set
 
 
 def create_copy_task(step: int, logger: Logger) -> Copy:
+    mark = "©"
     ans: Copy = {
         "name": "",
         "step": step,
@@ -88,17 +132,134 @@ def create_copy_task(step: int, logger: Logger) -> Copy:
         "destination": "",
         "subfolders": False,
     }
-    ans["name"] = qt.text("What's the name of the Task?", qmark="©").ask()
-    ans["target"] = qt.text("What's the Target?", qmark="©").ask()
-    ans["origin"] = qt.path("Where should it Copy from?", qmark="©").ask()
-    ans["destination"] = qt.path("Where should it Copy to?", qmark="©").ask()
-    ans["destination"] = qt.confirm(
-        "Should it search inside subfolders?", qmark="©"
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["target"] = _create_text_or_autocomplete(
+        "What's the Target?", mark, REFERENCES
     ).ask()
+    ans["origin"] = _create_path_or_autocomplete(
+        "Where should it Copy from?", mark, REFERENCES
+    ).ask()
+    ans["destination"] = _create_path_or_autocomplete(
+        "Where should it Copy to?", mark, REFERENCES
+    ).ask()
+    ans["subfolders"] = qt.confirm(
+        "Should it search inside subfolders?", qmark=mark
+    ).ask()
+    REFERENCES.append(f"${step}.target")
+    REFERENCES.append(f"${step}.origin")
+    REFERENCES.append(f"${step}.destination")
+    return ans
+
+
+def create_move_task(step: int, logger: Logger) -> Move:
+    mark = "🔀"
+    ans: Move = {
+        "name": "",
+        "step": step,
+        "operation": "move",
+        "target": "",
+        "origin": "",
+        "destination": "",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["target"] = _create_text_or_autocomplete(
+        "What's the Target?", mark, REFERENCES
+    ).ask()
+    ans["origin"] = _create_path_or_autocomplete(
+        "Where should it Move from?", mark, REFERENCES
+    ).ask()
+    ans["destination"] = _create_path_or_autocomplete(
+        "Where should it Move to?", mark, REFERENCES
+    ).ask()
+    REFERENCES.append(f"${step}.target")
+    REFERENCES.append(f"${step}.origin")
+    REFERENCES.append(f"${step}.destination")
+    return ans
+
+
+def create_zip_task(step: int, logger: Logger) -> Zip:
+    mark = "📁"
+    ans: Zip = {
+        "name": "",
+        "step": step,
+        "operation": "zip",
+        "target": "",
+        "rename": "",
+        "subfolders": False,
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["target"] = _create_text_or_autocomplete(
+        "What's the Target?", mark, REFERENCES
+    ).ask()
+    q = _create_text_or_autocomplete(
+        "What name should the Zip have?",
+        mark,
+        REFERENCES,
+    )
+    q.default = md5(f"{time()}{ans['step']}{ans['name']}".encode("UTF-8")).hexdigest()
+    ans["rename"] = q.ask()
+    destination = qt.confirm("Do you want to add a destination?", qmark=mark).ask()
+    if destination:
+        ans["destination"] = _create_path_or_autocomplete(
+            "Where should it Copy to?", mark, REFERENCES
+        ).ask()
+    ans["deflate"] = qt.confirm(
+        "Do you want the Zip deflated?", qmark=mark, default=False
+    ).ask()
+    ans["subfolders"] = qt.confirm(
+        "Should it search inside subfolders?", qmark=mark
+    ).ask()
+    REFERENCES.append(f"${step}.target")
+    REFERENCES.append(f"${step}.rename")
+    return ans
+
+
+def create_delete_task(step: int, logger: Logger) -> Delete:
+    mark = "❌"
+    ans: Delete = {
+        "name": "",
+        "step": step,
+        "operation": "delete",
+        "destination": "",
+        "target": "",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["target"] = _create_text_or_autocomplete(
+        "What's the Target?", mark, REFERENCES
+    ).ask()
+    ans["destination"] = _create_path_or_autocomplete(
+        "Where should it Delete?", mark, REFERENCES
+    ).ask()
+    REFERENCES.append(f"${step}.target")
+    REFERENCES.append(f"${step}.destination")
+    return ans
+
+
+def create_input_task(step: int, logger: Logger) -> Input:
+    mark = "🔠"
+    ans: Input = {"name": "", "step": step, "operation": "input", "question": ""}
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["question"] = _create_text_or_autocomplete(
+        "What's the question you want to ask?", mark, REFERENCES
+    ).ask()
+    REFERENCES.append(f"${step}.question")
+    REFERENCES.append(f"${step}.value")
+    return ans
+
+
+def create_echo_task(step: int, logger: Logger) -> Echo:
+    mark = "📢"
+    ans: Echo = {"name": "", "step": step, "operation": "echo", "value": ""}
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["value"] = _create_text_or_autocomplete(
+        "What do you want to output?", mark, REFERENCES
+    ).ask()
+    REFERENCES.append(f"${step}.value")
     return ans
 
 
 def create_request_task(step: int, logger: Logger) -> Request:
+    mark = "®"
     ans: Request = {
         "name": "",
         "step": step,
@@ -106,14 +267,16 @@ def create_request_task(step: int, logger: Logger) -> Request:
         "endpoint": "",
         "method": "get",
     }
-    ans["name"] = qt.text("What's the name of the Task?", qmark="®").ask()
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
     ans["method"] = qt.select(
         "Select a type of request:",
         choices=["get", "post", "delete", "put"],
-        qmark="®",
+        qmark=mark,
     ).ask()
     try:
-        u = qt.text("What's the endpoint URL?", qmark="®").ask()
+        u = _create_text_or_autocomplete(
+            "What's the endpoint URL?", mark, REFERENCES
+        ).ask()
         if isinstance(url(u), ValidationFailure):
             raise ValidationFailure(url, {"value": u, "public": False})
         ans["endpoint"] = u
@@ -122,24 +285,32 @@ def create_request_task(step: int, logger: Logger) -> Request:
         logger.error(
             "Endpoint provided was not a valid URL. Using default URL, please modify file after completion."
         )
-    body = qt.confirm("Do you want to send anything in the body?", qmark="®").ask()
+    body = qt.confirm("Do you want to send anything in the body?", qmark=mark).ask()
     if body:
         try:
             ans["body"] = json.loads(
-                qt.text(
-                    "What do you want to send (only accepts JSON strings)?", qmark="®"
+                _create_text_or_autocomplete(
+                    "What do you want to send (only accepts JSON strings)?",
+                    mark,
+                    REFERENCES,
                 ).ask()
             )
         except Exception:
             logger.error("Value sent is not a valid JSON string")
-    headers = qt.confirm("Do you want to send anything in the headers?", qmark="®").ask()
+    headers = qt.confirm("Do you want to send anything in the headers?", qmark=mark).ask()
     if headers:
         try:
             ans["headers"] = json.loads(
-                qt.text(
-                    "What do you want to send (only accepts JSON strings)?", qmark="®"
+                _create_text_or_autocomplete(
+                    "What do you want to send (only accepts JSON strings)?",
+                    mark,
+                    REFERENCES,
                 ).ask()
             )
         except Exception:
             logger.error("Value sent is not a valid JSON string")
+    REFERENCES.append(f"${step}.endpoint")
+    REFERENCES.append(f"${step}.method")
+    REFERENCES.append(f"${step}.body")
+    REFERENCES.append(f"${step}.headers")
     return ans

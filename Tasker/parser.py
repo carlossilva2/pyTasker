@@ -10,7 +10,23 @@ from webbrowser import open as FileOpener
 import chalk
 
 from .operations import *
-from .types import *
+from .types import (
+    DESTINATION_CHECK_MAP,
+    OP_COMMAND,
+    OP_COPY,
+    OP_DELETE,
+    OP_ECHO,
+    OP_INPUT,
+    OP_INSTRUCTION,
+    OP_MOVE,
+    OP_REQUEST,
+    OP_TASK,
+    OP_ZIP,
+    OPERATIONS,
+    InstructionSet,
+    OperationType,
+    Task,
+)
 
 
 class Parser:
