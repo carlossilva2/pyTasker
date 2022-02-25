@@ -3,7 +3,7 @@ import winreg
 
 # import os.path as Path
 from os import listdir, remove
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 ROOTS: Dict[str, int] = {
     "classes-root": winreg.HKEY_CLASSES_ROOT,
@@ -11,6 +11,15 @@ ROOTS: Dict[str, int] = {
     "current-config": winreg.HKEY_CURRENT_CONFIG,
     "local-machine": winreg.HKEY_LOCAL_MACHINE,
     "users": winreg.HKEY_USERS,
+}
+
+TYPES: Dict[str, int] = {
+    "sz": winreg.REG_SZ,
+    "multisz": winreg.REG_MULTI_SZ,
+    "none": winreg.REG_NONE,
+    "binary": winreg.REG_BINARY,
+    "dword": winreg.REG_DWORD,
+    "qword": winreg.REG_QWORD,
 }
 
 
@@ -21,6 +30,10 @@ def parse_input(k: str) -> Tuple[int, List[str]]:
     root: int = ROOTS[str_list[0]]
     str_list.pop(0)
     return (root, [_ for _ in str_list if _ != ""])
+
+
+def get_type(key: str) -> int:
+    return TYPES.get(key)
 
 
 def get_all_keys(root: str) -> List[str]:
@@ -45,7 +58,7 @@ def create_key(path: str, key_name: str) -> None:
         winreg.CreateKeyEx(key, key_name)
 
 
-def set_key_value(path: str, name: str, _type: int, value: str) -> None:
+def set_key_value(path: str, name: str, _type: int, value: Union[str, int]) -> None:
     k = parse_input(path)
     with winreg.OpenKey(
         k[0], r"\\".join(k[1]), reserved=0, access=winreg.KEY_SET_VALUE

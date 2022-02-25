@@ -9,7 +9,19 @@ import requests
 from .inspector import implements
 from .types import OperationType as Operation
 from .types import ParserType as Parser
+from .types import Registry as RegType
 from .types import Task
+
+try:
+    from .regutils import (
+        create_key,
+        get_key_value,
+        get_type,
+        parse_input,
+        set_key_value,
+    )
+except Exception:
+    not_imported = True
 
 
 def get_file_name(p: str) -> str:
@@ -355,26 +367,39 @@ class Registry:
         "intent": "Change Windows Registry values/keys",
     }
 
-    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
+    def __init__(self, ctx: Parser, task: RegType, logger: Logger) -> None:
         if ctx.system != "Windows":
             ctx.abort(f"Operation not available on {ctx.system} Systems!")
-        import regutils
-
+        self.regex = r"\w>"
         self.context = ctx  # Parser Context
         self.task = task  # Current assigned Task
         self.logger = logger
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "registry"
-        # with sub operations
-        # Params-> Key, SubKey, value
-        # Must have Rollback
 
     def execute(self) -> None:
-        raise NotImplementedError("Registry action has not been implemented yet")
+        self.path = ">".join([self.task["start_key"], self.task["key"]])
+        if self.task["function"] == "get":
+            self.value = get_key_value(self.path)
+        elif self.task["function"] == "set":
+            self.safeguard = get_key_value(self.path)
+            parsed = parse_input(self.path)
+            values = parsed[1]
+            self.v = values[-1]
+            values.pop()
+            self.correct_path = ">".join([self.task["start_key"], *values])
+            set_key_value(
+                self.correct_path, self.v, get_type(self.task["type"]), self.task["value"]
+            )
+            self.value = get_key_value(self.path)
 
     def rollback(self) -> None:
-        pass
+        if self.task["function"] == "set":
+            set_key_value(
+                self.correct_path, self.v, get_type(self.task["type"]), self.safeguard
+            )
+            self.logger.warn(f"Rolled back \"{self.task['name']}\" task")
 
     def set_state(self, state: bool) -> None:
         "Sets the state for the Internal Fault flag"

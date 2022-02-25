@@ -14,10 +14,23 @@ OP_ZIP = ["target", "rename", "!deflate", "!destination"]
 OP_INPUT = ["question"]
 OP_ECHO = ["value"]
 OP_REQUEST = ["endpoint", "method", "!body", "!headers"]
+OP_REGISTRY = ["start_key", "key", "function", "!value", "!rename"]
 
 # Available Operations
-OPERATIONS = ["copy", "zip", "move", "delete", "command", "input", "echo", "request"]
-LIST_OPERATIONS = Literal["copy", "zip", "move", "delete", "input", "echo", "request"]
+OPERATIONS = [
+    "copy",
+    "zip",
+    "move",
+    "delete",
+    "command",
+    "input",
+    "echo",
+    "registry",
+    "request",
+]
+LIST_OPERATIONS = Literal[
+    "copy", "zip", "move", "delete", "input", "echo", "registry", "request"
+]
 
 
 class Copy(TypedDict):
@@ -82,11 +95,25 @@ class Request(TypedDict, total=False):
     headers: Optional[Union[str, Dict[str, Any], None]]
 
 
+class Registry(TypedDict, total=False):
+    name: str
+    step: int
+    operation: Literal["registry"]
+    start_key: Literal[
+        "classes-root", "current-user", "current-config", "local-machine", "users"
+    ]
+    key: str
+    function: Literal["get", "set", "create", "backup"]
+    type: Literal["sz", "multisz", "none", "binary", "dword", "qword"]
+    value: Optional[Union[str, int]]
+    rename: Optional[str]
+
+
 # Structure Definition for task
 class Task(TypedDict):
     name: str
     step: int
-    operation: str
+    operation: LIST_OPERATIONS
     target: str
     origin: str
     destination: str
@@ -99,13 +126,17 @@ class Task(TypedDict):
     method: Literal["get", "post", "delete", "put"]
     body: Optional[Union[str, Dict[str, Any], None]]
     headers: Optional[Union[str, Dict[str, Any], None]]
+    start_key: Literal[
+        "classes-root", "current-user", "current-config", "local-machine", "users"
+    ]
+    function: Literal["get", "set", "create", "backup"]
 
 
 # Structure Definition for instruction_set
 class InstructionSet(TypedDict):
     name: str
     description: str
-    tasks: List[Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request]]
+    tasks: List[Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request, Registry]]
 
 
 class ParserType:

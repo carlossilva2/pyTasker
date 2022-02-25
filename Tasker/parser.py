@@ -19,6 +19,7 @@ from .types import (
     OP_INPUT,
     OP_INSTRUCTION,
     OP_MOVE,
+    OP_REGISTRY,
     OP_REQUEST,
     OP_TASK,
     OP_ZIP,
@@ -122,6 +123,10 @@ class Parser:
                 r = Request(self, task, self.logger)
                 self.__operation_stack.append(r)
                 r.execute()
+            elif task["operation"] == "registry":
+                reg = Registry(self, task, self.logger)
+                self.__operation_stack.append(reg)
+                reg.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)

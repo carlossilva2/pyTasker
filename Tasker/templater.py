@@ -46,6 +46,7 @@ def create_template(logger: Logger) -> InstructionSet:
     input_a = "Input Action"
     echo_a = "Echo Action"
     request_a = "Request Action"
+    registry_a = "Registry Action"
     instruction_set: InstructionSet = {"name": "", "description": "", "tasks": []}
     no_break = True
     available_actions = [
@@ -54,6 +55,7 @@ def create_template(logger: Logger) -> InstructionSet:
         echo_a,
         input_a,
         move_a,
+        registry_a,
         request_a,
         zip_a,
         "Nothing else",
@@ -110,8 +112,11 @@ def create_template(logger: Logger) -> InstructionSet:
             instruction_set["tasks"].append(
                 create_request_task(len(instruction_set["tasks"]), logger)
             )
+        elif option == registry_a:
+            instruction_set["tasks"].append(
+                create_registry_task(len(instruction_set["tasks"]), logger)
+            )
     save = qt.confirm("Do you want save?", qmark="📕", default=False).ask()
-    print(instruction_set)
     if save:
         json.dump(
             instruction_set,
@@ -313,4 +318,50 @@ def create_request_task(step: int, logger: Logger) -> Request:
     REFERENCES.append(f"${step}.method")
     REFERENCES.append(f"${step}.body")
     REFERENCES.append(f"${step}.headers")
+    return ans
+
+
+def create_registry_task(step: int, logger: Logger) -> Registry:
+    mark = "🗄"
+    ans: Registry = {
+        "name": "",
+        "step": step,
+        "operation": "registry",
+        "function": "get",
+        "key": "",
+        "start_key": "local-machine",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["function"] = qt.select(
+        "Select a type of operation:",
+        choices=["get", "set", "create", "backup"],
+        qmark=mark,
+    ).ask()
+    ans["start_key"] = qt.select(
+        "Select the root of the Registry:",
+        choices=[
+            "classes-root",
+            "current-user",
+            "current-config",
+            "local-machine",
+            "users",
+        ],
+        qmark=mark,
+    ).ask()
+    ans["key"] = qt.text("What's the Key you're trying to access/edit?", qmark=mark).ask()
+    change = qt.confirm("Are you changing any value in a Key?", qmark=mark).ask()
+    if change:
+        ans["type"] = qt.select(
+            "Select a Key type:",
+            choices=["sz", "multisz", "none", "binary", "dword", "qword"],
+            qmark=mark,
+        ).ask()
+        ans["value"] = qt.text(
+            "What's the Key value you want to change to?", qmark=mark
+        ).ask()
+    REFERENCES.append(f"${step}.function")
+    REFERENCES.append(f"${step}.start_key")
+    REFERENCES.append(f"${step}.key")
+    REFERENCES.append(f"${step}.type")
+    REFERENCES.append(f"${step}.value")
     return ans
