@@ -44,5 +44,8 @@ setup(
     entry_points={"console_scripts": ["tasker = Tasker.__main__:main"]},
     install_requires=["requests", "pychalk", "questionary", "validators"],
     package_data={},
-    project_urls={"Source": "https://github.com/carlossilva2/pyTasker"},
+    project_urls={
+        "Source": "https://github.com/carlossilva2/pyTasker",
+        "Documentation": "https://cmsilva.gitbook.io/pytasker/",
+    },
 )

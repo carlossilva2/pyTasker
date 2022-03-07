@@ -2,7 +2,7 @@ import sys
 
 import chalk
 
-from .cli import get_args, get_logger
+from .cli import flag_present, get_args, get_logger
 from .parser import Parser
 from .templater import ask_file_to_run, create_template
 
@@ -12,7 +12,7 @@ __version__ = "0.4.0"
 def main() -> None:
     logger = get_logger()
     try:
-        args = get_args(sys.argv, __version__)
+        args = get_args(__version__)
     except IndexError:
         logger.error("No action provided")
         sys.exit(1)
@@ -33,9 +33,10 @@ def main() -> None:
     elif args.action == "edit":
         Parser.open_file_for_edit(args.File)
     elif args.action == "create":
-        Parser.create_new_task(args.f, args.n, args.d)
-    elif args.action == "templater":
-        create_template(logger)
+        if flag_present(["File", "Description", "Name"], args):
+            Parser.create_new_task(args.File, args.Name, args.Description)
+        else:
+            create_template(logger)
     else:
         logger.error("Check Help for command syntax")
 

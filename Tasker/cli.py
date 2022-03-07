@@ -1,6 +1,7 @@
 import argparse
 import logging
 from os import environ as env
+from typing import List, Union
 
 import chalk
 
@@ -16,7 +17,7 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def get_args(operation: list[str], version: str) -> argparse.Namespace:
+def get_args(version: str) -> argparse.Namespace:
     "Create Argument parser for CLI use and return all the parsed args"
     parser = argparse.ArgumentParser(
         prog="pyTasker",
@@ -38,7 +39,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
         "--Instruction-Set",
         type=str,
         metavar="",
-        required=False,  # True if "execute" in operation else False
+        required=False,
         help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list",
     )
     options.add_argument(
@@ -46,7 +47,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
         "--File",
         type=str,
         metavar="",
-        required=True if ("create" in operation or "edit" in operation) else False,
+        required=False,
         help="Task File Name flag.",
     )
     options.add_argument(
@@ -54,7 +55,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
         "--Name",
         type=str,
         metavar="",
-        required=True if "create" in operation else False,
+        required=False,
         help="Task Human Readable Name flag.",
     )
     options.add_argument(
@@ -62,7 +63,7 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
         "--Description",
         type=str,
         metavar="",
-        required=True if "create" in operation else False,
+        required=False,
         help="Description for Task template.",
     )
     options.add_argument(
@@ -83,3 +84,9 @@ def get_args(operation: list[str], version: str) -> argparse.Namespace:
     if args.No_Rollback:
         env["-No-Rollback"] = "1"
     return args
+
+
+def flag_present(flag: Union[str, List[str]], args: argparse.Namespace) -> bool:
+    if isinstance(flag, list):
+        return all([args.__dict__[_] is not None for _ in flag])
+    return flag in args.__dict__

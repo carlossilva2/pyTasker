@@ -2,6 +2,7 @@ import json
 import os.path as Path
 from hashlib import md5
 from logging import Logger
+from os import listdir
 from time import time
 from typing import List, Union
 
@@ -66,6 +67,8 @@ def create_template(logger: Logger) -> InstructionSet:
         .lower()
         .replace(" ", "_")
     )
+    if f"{file_name}.tasker.json" in listdir(f"{Path.expanduser('~')}/.tasker/Tasks"):
+        file_name = f"{file_name}_{md5(f'{time()}'.encode('UTF-8')).hexdigest()[:6]}"
     instruction_set["name"] = qt.text(
         "What's the name of the InstructionSet?", qmark="📘"
     ).ask()
@@ -348,17 +351,32 @@ def create_registry_task(step: int, logger: Logger) -> Registry:
         ],
         qmark=mark,
     ).ask()
-    ans["key"] = qt.text("What's the Key you're trying to access/edit?", qmark=mark).ask()
-    change = qt.confirm("Are you changing any value in a Key?", qmark=mark).ask()
-    if change:
-        ans["type"] = qt.select(
-            "Select a Key type:",
-            choices=["sz", "multisz", "none", "binary", "dword", "qword"],
-            qmark=mark,
+    ans["key"] = qt.text(
+        "What's the Key you're trying to access/edit/create?", qmark=mark
+    ).ask()
+    if ans["function"] in ["set", "create"]:
+        change = qt.confirm("Are you changing any value in a Key?", qmark=mark).ask()
+        if change:
+            ans["type"] = qt.select(
+                "Select a Key type:",
+                choices=["sz", "multisz", "none", "binary", "dword", "qword"],
+                qmark=mark,
+            ).ask()
+            ans["value"] = qt.text(
+                "What's the Key value you want to change to?", qmark=mark
+            ).ask()
+        elif qt.confirm("Are you creating a Key?", qmark=mark).ask():
+            ans["value"] = qt.text(
+                "What's the Key value you want to create?", qmark=mark
+            ).ask()
+    elif ans["function"] == "backup":
+        ans["key"] = qt.path(
+            "Where to you want to store the backup file?", qmark=mark
         ).ask()
-        ans["value"] = qt.text(
-            "What's the Key value you want to change to?", qmark=mark
+        ans["rename"] = qt.text(
+            "What's the name you want to give the file?", qmark=mark
         ).ask()
+        REFERENCES.append(f"${step}.rename")
     REFERENCES.append(f"${step}.function")
     REFERENCES.append(f"${step}.start_key")
     REFERENCES.append(f"${step}.key")

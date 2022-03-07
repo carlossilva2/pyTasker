@@ -6,6 +6,8 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import chalk
 import requests
 
+from Tasker.regutils import backup
+
 from .inspector import implements
 from .types import OperationType as Operation
 from .types import ParserType as Parser
@@ -377,13 +379,16 @@ class Registry:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "registry"
+        self.handle_references()
 
     def execute(self) -> None:
         self.path = ">".join([self.task["start_key"], self.task["key"]])
         if self.task["function"] == "get":
-            self.value = get_key_value(self.path)
+            self.value = get_key_value(self.path, self.logger)
         elif self.task["function"] == "set":
-            self.safeguard = get_key_value(self.path)
+            if self.task["value"] == "" or self.task["value"] == None:
+                self.context.abort("No value was provided")
+            self.safeguard = get_key_value(self.path, self.logger)
             parsed = parse_input(self.path)
             values = parsed[1]
             self.v = values[-1]
@@ -392,7 +397,14 @@ class Registry:
             set_key_value(
                 self.correct_path, self.v, get_type(self.task["type"]), self.task["value"]
             )
-            self.value = get_key_value(self.path)
+            self.value = get_key_value(self.path, self.logger)
+        elif self.task["function"] == "create":
+            create_key(self.path, self.task["value"])
+        elif self.task["function"] == "backup":
+            raise NotImplementedError(
+                "Feature under development. Refer to future versions"
+            )
+            backup(self.task["start_key"], self.task["key"], self.task["rename"])
 
     def rollback(self) -> None:
         if self.task["function"] == "set":
@@ -408,6 +420,17 @@ class Registry:
     def get_state(self) -> bool:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
+
+    def handle_references(self) -> None:
+        for key in self.task.keys():
+            if type(self.task[key]) == str and self.task[key].startswith("$"):
+                if "." in self.task[key]:
+                    _ = self.task[key].split(".")
+                    step = self.context._get_step_reference(self.task, _[0])
+                    self.task[key] = step[_[1]]
+                else:
+                    step = self.context._get_step_reference(self.task, self.task[key])
+                    self.task[key] = step[key]
 
 
 @implements(Operation)
