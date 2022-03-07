@@ -1,2 +1,0 @@
-Tasker
-static
