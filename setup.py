@@ -22,7 +22,7 @@ setup(
     description="Run pipelines on your own computer for better automation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.3.0",
+    version="0.4.0",
     url="https://github.com/carlossilva2/pyTasker",
     packages=find_packages(),
     license="GPLv3",
@@ -42,7 +42,10 @@ setup(
     ],
     python_requires=">=3.8",
     entry_points={"console_scripts": ["tasker = Tasker.__main__:main"]},
-    install_requires=["requests", "pychalk"],
+    install_requires=["requests", "pychalk", "questionary", "validators"],
     package_data={},
-    project_urls={"Source": "https://github.com/carlossilva2/pyTasker"},
+    project_urls={
+        "Source": "https://github.com/carlossilva2/pyTasker",
+        "Documentation": "https://cmsilva.gitbook.io/pytasker/",
+    },
 )

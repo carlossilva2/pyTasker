@@ -1,3 +1,0 @@
-[console_scripts]
-tasker = Tasker.__main__:main
-

@@ -10,11 +10,32 @@ from webbrowser import open as FileOpener
 import chalk
 
 from .operations import *
-from .types import *
+from .types import (
+    DESTINATION_CHECK_MAP,
+    OP_COMMAND,
+    OP_COPY,
+    OP_DELETE,
+    OP_ECHO,
+    OP_INPUT,
+    OP_INSTRUCTION,
+    OP_MOVE,
+    OP_REGISTRY,
+    OP_REQUEST,
+    OP_TASK,
+    OP_ZIP,
+    OPERATIONS,
+    InstructionSet,
+    OperationType,
+    Task,
+)
 
 
 class Parser:
     def __init__(self, task: str, logger: Logger) -> None:
+        self.supported_os = ["Windows"]  # List of Tasker supported OSes
+        self.logger = logger
+        if task not in self.list_all_tasks():
+            self.abort(f"'{task}' InstructionSet was not found")
         self.warn_user()
         self.__first_execution_routine()
         self.task: InstructionSet = json.load(
@@ -22,14 +43,11 @@ class Parser:
         )
         analysis = self.__analyse_keys()
         if not analysis[0]:
-            logger.error(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
-            sys.exit(1)
+            self.abort(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
         self.__optional_parameters()
-        self.logger = logger
         self.__change_relative_locations(Path.expanduser("~"))
         self.__executed_tasks: List[Task] = []
         self.__operation_stack: list[OperationType] = []
-        self.__supported_os = ["Windows"]  # List of Tasker supported OSes
 
     def execute(self) -> None:
         self.task["tasks"] = sorted(self.task["tasks"], key=lambda d: d["step"])
@@ -54,11 +72,9 @@ class Parser:
     def warn_user(self) -> None:
         "Verifies if current OS is one of the allowed ones"
         self.system = platform.system()
-        if platform.system() not in self.__supported_os and (
-            "-No-Warning" not in os.environ
-        ):
+        if (self.system not in self.supported_os) and ("-No-Warning" not in os.environ):
             ans = input(
-                f"'{platform.system()}' is not part of the current supported OS list.\nAre you sure you want to continue? Y/n\n"
+                f"'{self.system}' is not part of the current supported OS list.\nAre you sure you want to continue? Y/n\n"
             )
             if ans.lower() == "y":
                 pass
@@ -107,6 +123,10 @@ class Parser:
                 r = Request(self, task, self.logger)
                 self.__operation_stack.append(r)
                 r.execute()
+            elif task["operation"] == "registry":
+                reg = Registry(self, task, self.logger)
+                self.__operation_stack.append(reg)
+                reg.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
@@ -157,7 +177,7 @@ class Parser:
 
     def __analyse_keys(
         self,
-    ) -> "tuple[bool, Union[str,None], Union[str,None], Union[str,None]]":
+    ) -> tuple[bool, Union[str, None], Union[str, None], Union[str, None]]:
         "Verify if the structure of the Instruction Set is defined correctly"
         for key in OP_INSTRUCTION:
             if key not in self.task.keys():
@@ -196,7 +216,7 @@ class Parser:
             ][obj[1]]
             del self.task["tasks"][obj[0]][obj[1]]
 
-    def _get_all_file_paths(self, directory: str) -> "List[str]":
+    def _get_all_file_paths(self, directory: str) -> List[str]:
         file_paths = []
         for root, _, files in os.walk(directory):
             for filename in files:
@@ -256,6 +276,7 @@ class Parser:
             if "config.json" not in tasker_folder:
                 create_initial_config(root_path)
         self.default_location = f"{root_path}/.tasker/Tasks"
+        # TODO: validate entry point for Starting Location on config file
 
     # Static Methods
 

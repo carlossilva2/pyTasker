@@ -1,4 +1,10 @@
-# 0.3.0 (2022-02-XX)
+# 0.4.0 (2022-02-XX)
+
+*What's new*
+
+- New Request Action
+
+# 0.3.0 (2022-02-11)
 
 *What's new*
 
