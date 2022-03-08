@@ -17,7 +17,7 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def get_args(version: str) -> argparse.Namespace:
+def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
     "Create Argument parser for CLI use and return all the parsed args"
     parser = argparse.ArgumentParser(
         prog="pyTasker",
@@ -30,7 +30,7 @@ def get_args(version: str) -> argparse.Namespace:
     parser.add_argument(
         "action",
         help="What action should Tasker perform",
-        choices=["list", "execute", "create", "edit", "templater"],
+        choices=["list", "execute", "create", "edit"],
     )
 
     options = parser.add_argument_group("parameters")
@@ -40,7 +40,7 @@ def get_args(version: str) -> argparse.Namespace:
         type=str,
         metavar="",
         required=False,
-        help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list",
+        help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list with all InstructionSets",
     )
     options.add_argument(
         "-f",
@@ -78,11 +78,19 @@ def get_args(version: str) -> argparse.Namespace:
         action="store_true",
         help="Prevents Tasker to perform Rollback in case of Task failure.",
     )
+    options.add_argument(
+        "-no",
+        "--No-Output",
+        action="store_true",
+        help="Disables normal logging, only shows Warnings and Errors.",
+    )
     args = parser.parse_args()
     if args.No_Warning:
         env["-No-Warning"] = "1"
     if args.No_Rollback:
         env["-No-Rollback"] = "1"
+    if args.No_Output:
+        logger.setLevel(logging.WARNING)
     return args
 
 

@@ -130,7 +130,7 @@ def create_template(logger: Logger) -> InstructionSet:
 
 
 def create_copy_task(step: int, logger: Logger) -> Copy:
-    mark = "©"
+    mark = "©️"
     ans: Copy = {
         "name": "",
         "step": step,
@@ -267,7 +267,7 @@ def create_echo_task(step: int, logger: Logger) -> Echo:
 
 
 def create_request_task(step: int, logger: Logger) -> Request:
-    mark = "®"
+    mark = "®️"
     ans: Request = {
         "name": "",
         "step": step,
@@ -325,7 +325,7 @@ def create_request_task(step: int, logger: Logger) -> Request:
 
 
 def create_registry_task(step: int, logger: Logger) -> Registry:
-    mark = "🗄"
+    mark = "🗄️"
     ans: Registry = {
         "name": "",
         "step": step,
@@ -362,19 +362,25 @@ def create_registry_task(step: int, logger: Logger) -> Registry:
                 choices=["sz", "multisz", "none", "binary", "dword", "qword"],
                 qmark=mark,
             ).ask()
-            ans["value"] = qt.text(
-                "What's the Key value you want to change to?", qmark=mark
+            ans["value"] = _create_text_or_autocomplete(
+                "What's the Key value you want to change to?",
+                mark,
+                REFERENCES,
             ).ask()
         elif qt.confirm("Are you creating a Key?", qmark=mark).ask():
-            ans["value"] = qt.text(
-                "What's the Key value you want to create?", qmark=mark
+            ans["value"] = _create_text_or_autocomplete(
+                "What's the Key value you want to create?",
+                mark,
+                REFERENCES,
             ).ask()
     elif ans["function"] == "backup":
-        ans["key"] = qt.path(
-            "Where to you want to store the backup file?", qmark=mark
+        ans["key"] = _create_path_or_autocomplete(
+            "Where to you want to store the backup file?", mark, REFERENCES
         ).ask()
-        ans["rename"] = qt.text(
-            "What's the name you want to give the file?", qmark=mark
+        ans["rename"] = _create_text_or_autocomplete(
+            "What's the name you want to give the file?",
+            mark,
+            REFERENCES,
         ).ask()
         REFERENCES.append(f"${step}.rename")
     REFERENCES.append(f"${step}.function")
