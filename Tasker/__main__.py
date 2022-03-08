@@ -6,13 +6,13 @@ from .cli import flag_present, get_args, get_logger
 from .parser import Parser
 from .templater import ask_file_to_run, create_template
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 
 def main() -> None:
     logger = get_logger()
     try:
-        args = get_args(__version__)
+        args = get_args(__version__, logger)
     except IndexError:
         logger.error("No action provided")
         sys.exit(1)
