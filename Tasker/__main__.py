@@ -6,7 +6,7 @@ from .cli import flag_present, get_args, get_logger
 from .parser import Parser
 from .templater import ask_file_to_run, create_template
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 
 def main() -> None:

@@ -26,6 +26,7 @@ from .types import (
     OPERATIONS,
     InstructionSet,
     OperationType,
+    Settings,
     Task,
 )
 
@@ -45,7 +46,8 @@ class Parser:
         if not analysis[0]:
             self.abort(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
         self.__optional_parameters()
-        self.__change_relative_locations(Path.expanduser("~"))
+        self.settings = self.__get_configs()
+        self.__change_relative_locations(self.settings["current_location"])
         self.__executed_tasks: List[Task] = []
         self.__operation_stack: list[OperationType] = []
 
@@ -277,6 +279,10 @@ class Parser:
                 create_initial_config(root_path)
         self.default_location = f"{root_path}/.tasker/Tasks"
         # TODO: validate entry point for Starting Location on config file
+
+    def __get_configs(self) -> Settings:
+        j: Settings = json.load(open(f"{Path.expanduser('~')}/.tasker/config.json"))
+        return j
 
     # Static Methods
 
