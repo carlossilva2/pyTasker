@@ -4,9 +4,9 @@ import chalk
 
 from .cli import flag_present, get_args, get_logger
 from .parser import Parser
-from .templater import ask_file_to_run, create_template
+from .templater import ask_file_to_run, create_template, check_duplicate_names
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 
 def main() -> None:
@@ -23,7 +23,7 @@ def main() -> None:
             print(f"   {chalk.green('➡')} {task}")
     elif args.action == "execute":
         ans = (
-            ask_file_to_run([*Parser.list_all_tasks(), "nevermind..."])
+            ask_file_to_run([*Parser.list_all_tasks(), "nevermind..."], "execute")
             if args.Instruction_Set is None
             else args.Instruction_Set
         )
@@ -31,10 +31,16 @@ def main() -> None:
             P = Parser(ans, logger)
             P.execute()
     elif args.action == "edit":
-        Parser.open_file_for_edit(args.File)
+        ans = (
+            ask_file_to_run([*Parser.list_all_tasks(), "nevermind..."], "edit")
+            if args.Instruction_Set is None
+            else args.Instruction_Set
+        )
+        if ans != None:
+            Parser.open_file_for_edit(ans)
     elif args.action == "create":
         if flag_present(["File", "Description", "Name"], args):
-            Parser.create_new_task(args.File, args.Name, args.Description)
+            Parser.create_new_task(check_duplicate_names(args.File), args.Name, args.Description)
         else:
             create_template(logger)
     else:
