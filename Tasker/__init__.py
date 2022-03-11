@@ -1,3 +1,5 @@
+import chalk
+
 from Tasker.parser import Parser
 
 from Tasker.operations import Command
@@ -14,11 +16,11 @@ from Tasker.cli import get_args
 
 from Tasker.inspector import inspect
 
-from Tasker.__version__ import __version__ as v
-
-__version__ = v
+from Tasker.__version__ import __version__
 
 __all__ = [
+    #Colorizer
+    "chalk",
     #Parser
     "Parser",
     #Operations
@@ -34,5 +36,7 @@ __all__ = [
     "get_logger",
     "get_args",
     #Inspector
-    "inspect"
+    "inspect",
+    #Version
+    "__version__"
 ]
