@@ -1,5 +1,9 @@
 from logging import Logger
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+try:
+    from typing import TypedDict
+except Exception:
+    from typing_extensions import TypedDict
 
 # Structure definitions
 OP_INSTRUCTION = ["name", "description", "tasks"]
