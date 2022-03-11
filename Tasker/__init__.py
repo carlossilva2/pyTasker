@@ -14,6 +14,10 @@ from Tasker.cli import get_args
 
 from Tasker.inspector import inspect
 
+from Tasker.__version__ import __version__ as v
+
+__version__ = v
+
 __all__ = [
     #Parser
     "Parser",

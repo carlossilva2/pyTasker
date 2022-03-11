@@ -5,8 +5,7 @@ import chalk
 from .cli import flag_present, get_args, get_logger
 from .parser import Parser
 from .templater import ask_file_to_run, create_template, check_duplicate_names
-
-__version__ = "0.4.3"
+from .__version__ import __version__
 
 
 def main() -> None:

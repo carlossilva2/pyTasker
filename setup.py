@@ -2,6 +2,7 @@ import os
 import sys
 
 from setuptools import find_packages, setup
+from Tasker.__version__ import __version__
 
 if sys.argv[-1] == "build":
     os.system("python setup.py sdist")
@@ -22,7 +23,7 @@ setup(
     description="Run pipelines on your own computer for better automation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.4.3",
+    version=__version__,
     url="https://github.com/carlossilva2/pyTasker",
     packages=find_packages(),
     license="GPLv3",

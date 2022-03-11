@@ -3,3 +3,4 @@ pychalk==2.0.1
 questionary==1.10.0
 validators==0.18.2
 pywin32==303
+typing_extensions==4.1.1
