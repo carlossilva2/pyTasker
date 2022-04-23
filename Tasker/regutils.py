@@ -43,7 +43,8 @@ def parse_input(k: str) -> Tuple[int, List[str]]:
 
 
 def get_type(key: TypeList) -> int:
-    return TYPES.get(key)
+    ans = TYPES.get(key)
+    return ans if ans != None else TYPES["sz"]
 
 
 def get_all_keys(root: RootKeys) -> List[str]:
