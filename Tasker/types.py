@@ -225,10 +225,16 @@ class Extension(TypedDict):
     path: str
 
 
+class Alias(TypedDict):
+    name: str
+    path: str
+
+
 class Settings(TypedDict):
     current_location: str
     default_location: str
     extensions: List[Extension]
+    alias: List[Alias]
 
 
 class CustomOperation(TypedDict):

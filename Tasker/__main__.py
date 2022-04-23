@@ -39,17 +39,27 @@ def main() -> None:
             Parser.open_file_for_edit(ans)
     elif args.action == "create":
         if flag_present(["File", "Description", "Name"], args):
-            Parser.create_new_task(args.File, args.Name, args.Description)
-        elif flag_present("Extension", args) and args.Extension:
-            if args.Name is None:
-                logger.error("Extension Name is required. Use '--Name' flag.")
-                sys.exit(1)
-            Parser.create_extension(args.Name)
             Parser.create_new_task(
                 check_duplicate_names(args.File), args.Name, args.Description
             )
         else:
             create_template(logger)
+    elif args.action == "extension":
+        if args.Name is None:
+            logger.error("Extension Name is required. Use '--Name' flag.")
+            sys.exit(1)
+        Parser.create_extension(args.Name)
+    elif args.action == "alias":
+        if flag_present(["Path", "Name"], args) and args.Path is not None:
+            Parser.add_alias(
+                {
+                    "name": args.Name,
+                    "path": args.Path,
+                },
+                logger,
+            )
+        else:
+            logger.error("Path and Name flags are required when creating Aliases")
     else:
         logger.error("Check Help for command syntax")
 
