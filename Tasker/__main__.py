@@ -6,7 +6,7 @@ from .cli import flag_present, get_args, get_logger
 from .parser import Parser
 from .templater import ask_file_to_run, create_template
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 
 
 def main() -> None:
@@ -35,6 +35,11 @@ def main() -> None:
     elif args.action == "create":
         if flag_present(["File", "Description", "Name"], args):
             Parser.create_new_task(args.File, args.Name, args.Description)
+        elif flag_present("Extension", args) and args.Extension:
+            if args.Name is None:
+                logger.error("Extension Name is required. Use '--Name' flag.")
+                sys.exit(1)
+            Parser.create_extension(args.Name)
         else:
             create_template(logger)
     else:

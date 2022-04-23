@@ -36,11 +36,12 @@ def _create_path_or_autocomplete(
     "Create a Path Question with/without Autocomplete based on the `choices`"
     if len(choices) == 0:
         return qt.text(message, qmark=mark)
-    return qt.path(message, choices=choices, qmark=mark, only_directories=True)
+    return qt.path(message, qmark=mark, only_directories=True)
 
 
 def create_template(logger: Logger) -> InstructionSet:
     copy_a = "Copy Action"
+    custom_a = "Custom Action"
     zip_a = "Zip Action"
     delete_a = "Delete Action"
     move_a = "Move Action"
@@ -59,6 +60,7 @@ def create_template(logger: Logger) -> InstructionSet:
         registry_a,
         request_a,
         zip_a,
+        custom_a,
         "Nothing else",
     ]
     file_name: str = (
@@ -118,6 +120,10 @@ def create_template(logger: Logger) -> InstructionSet:
         elif option == registry_a:
             instruction_set["tasks"].append(
                 create_registry_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == custom_a:
+            instruction_set["tasks"].append(
+                create_custom_task(len(instruction_set["tasks"]), logger)
             )
     save = qt.confirm("Do you want save?", qmark="📕", default=False).ask()
     if save:
@@ -388,4 +394,19 @@ def create_registry_task(step: int, logger: Logger) -> Registry:
     REFERENCES.append(f"${step}.key")
     REFERENCES.append(f"${step}.type")
     REFERENCES.append(f"${step}.value")
+    return ans
+
+
+def create_custom_task(step: int, logger: Logger) -> Custom:
+    mark = "🛠️"
+    ans: Custom = {"name": "", "step": step, "operation": "custom", "extension_name": ""}
+    settings: Settings = json.load(
+        open(f"{Path.expanduser('~')}/.tasker/config.json", "r")
+    )
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["extension_name"] = qt.select(
+        "Select an extension:",
+        choices=[e["name"] for e in settings["extensions"]],
+        qmark=mark,
+    ).ask()
     return ans
