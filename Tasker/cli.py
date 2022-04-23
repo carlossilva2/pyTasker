@@ -30,7 +30,7 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
     parser.add_argument(
         "action",
         help="What action should Tasker perform",
-        choices=["list", "execute", "create", "edit"],
+        choices=["list", "execute", "create", "edit", "extension", "alias"],
     )
 
     options = parser.add_argument_group("parameters")
@@ -67,10 +67,12 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
         help="Description for Task template.",
     )
     options.add_argument(
-        "-e",
-        "--Extension",
-        action="store_true",
-        help="",
+        "-p",
+        "--Path",
+        type=str,
+        metavar="",
+        required=False,
+        help="Path alias argument.",
     )
     options.add_argument(
         "-nw",

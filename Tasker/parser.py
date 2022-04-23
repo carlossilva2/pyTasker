@@ -28,6 +28,7 @@ from .types import (
     OP_TASK,
     OP_ZIP,
     OPERATIONS,
+    Alias,
     CustomOperation,
     InstructionSet,
     OperationType,
@@ -441,3 +442,15 @@ class Extension:
             )
             json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
             template.close()
+
+    @staticmethod
+    def add_alias(alias: Alias, logger: Logger) -> None:
+        root = Path.expanduser("~")
+        settings: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        # check if alias is already present
+        for _alias in settings["alias"]:
+            if alias["name"] == _alias["name"]:
+                logger.error("An Alias with that name already exists")
+                sys.exit(1)
+        settings["alias"].append(alias)
+        json.dump(settings, open(f"{root}/.tasker/config.json", "w"), indent=4)

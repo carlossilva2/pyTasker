@@ -25,6 +25,7 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
     - [Echo Action](#echo-action)
     - [Request Action](#request-action)
     - [Registry Action](#registry-action)
+    - [Custom Action](#custom-action)
   - [Usage](#usage)
   - [Roadmap](#roadmap)
     - [Actions in Pipeline](#actions-in-pipeline)
@@ -184,6 +185,19 @@ For extra information use `tasker -h`
     "type": "<sz | multisz | none | binary | dword | qword>",
     "value": "<data>",
     "rename": "<file name for backup>"
+}
+```
+
+### Custom Action
+
+> Allows the usage of Custom Extension when created via the `tasker extension -n <Name of Extension>` command
+
+```json
+{
+    "name": "<Name of Step>",
+    "step": 0,
+    "operation": "custom",
+    "extension_name": ""
 }
 ```
 
