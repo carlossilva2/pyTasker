@@ -3,7 +3,10 @@ import os
 import os.path as Path
 import platform
 import sys
+from hashlib import md5
+from importlib.machinery import SourceFileLoader as importer
 from logging import Logger
+from time import time
 from typing import List, Union
 from webbrowser import open as FileOpener
 
@@ -14,6 +17,7 @@ from .types import (
     DESTINATION_CHECK_MAP,
     OP_COMMAND,
     OP_COPY,
+    OP_CUSTOM,
     OP_DELETE,
     OP_ECHO,
     OP_INPUT,
@@ -24,8 +28,10 @@ from .types import (
     OP_TASK,
     OP_ZIP,
     OPERATIONS,
+    CustomOperation,
     InstructionSet,
     OperationType,
+    Settings,
     Task,
 )
 
@@ -45,7 +51,10 @@ class Parser:
         if not analysis[0]:
             self.abort(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
         self.__optional_parameters()
-        self.__change_relative_locations(Path.expanduser("~"))
+        self.settings = self.__get_configs()
+        # load extensions
+        self.extensions: List[CustomOperation] = self.load_extensions()
+        self.__change_relative_locations(self.settings["current_location"])
         self.__executed_tasks: List[Task] = []
         self.__operation_stack: list[OperationType] = []
 
@@ -127,6 +136,20 @@ class Parser:
                 reg = Registry(self, task, self.logger)
                 self.__operation_stack.append(reg)
                 reg.execute()
+            elif task["operation"] == "custom":
+                ex = next(
+                    (e for e in self.extensions if e["summon"] == task["extension_name"]),
+                    None,
+                )
+                if ex is None:
+                    self.abort(
+                        f"No executable found with name {chalk.red(task['extension_name'])}"
+                    )
+                function: OperationType = ex["executable"].Extension(
+                    self, task, self.logger
+                )
+                self.__operation_stack.append(function)
+                function.execute()
             else:
                 raise Exception(f"{task['operation']} is an Unknown Operation")
             self.__executed_tasks.append(task)
@@ -257,26 +280,22 @@ class Parser:
 
     def __first_execution_routine(self) -> None:
         "Create the initial configuration and setup necessary directories"
-
-        def create_initial_config(p: str) -> None:
-            with open(f"{p}/.tasker/config.json", "w") as config:
-                json.dump(
-                    {"current_location": p, "default_location": p}, config, indent=4
-                )
-                config.close()
-
+        self.do_config()
         root_path = Path.expanduser("~")
-        root_folders = os.listdir(root_path)
-        if ".tasker" not in root_folders:
-            os.mkdir(f"{root_path}/.tasker")
-            os.mkdir(f"{root_path}/.tasker/Tasks")
-            create_initial_config(root_path)
-        else:
-            tasker_folder = os.listdir(f"{Path.expanduser('~')}/.tasker")
-            if "config.json" not in tasker_folder:
-                create_initial_config(root_path)
         self.default_location = f"{root_path}/.tasker/Tasks"
         # TODO: validate entry point for Starting Location on config file
+
+    def __get_configs(self) -> Settings:
+        j: Settings = json.load(open(f"{Path.expanduser('~')}/.tasker/config.json"))
+        return j
+
+    def load_extensions(self) -> List[CustomOperation]:
+        modules: List[CustomOperation] = []
+        for extension in self.settings["extensions"]:
+            # sys.path.insert(0, extension["path"])
+            spec: OperationType = importer(f"{extension['file'].replace('.py', '')}", extension["path"]).load_module()  # type: ignore
+            modules.append({"executable": spec, "summon": extension["name"]})
+        return modules
 
     # Static Methods
 
@@ -287,19 +306,92 @@ class Parser:
         def create_initial_config(p: str) -> None:
             with open(f"{p}/.tasker/config.json", "w") as config:
                 json.dump(
-                    {"current_location": p, "default_location": p}, config, indent=4
+                    {
+                        "current_location": p,
+                        "default_location": p,
+                        "extensions": [],
+                        "alias": [],
+                    },
+                    config,
+                    indent=4,
                 )
                 config.close()
+            with open(f"{p}/.tasker/template.txt", "w") as template:
+                template.write(
+                    """\
+from logging import Logger
+
+from Tasker.inspector import implements
+
+from Tasker.types import OperationType as Operation
+from Tasker.types import Task
+from Tasker.types import ParserType as Parser
+
+
+@implements(Operation)
+class Extension:
+    "<name> Action"
+
+    __annotations__ = {
+        "name": "<name> Action",
+        "intent": "<description>",
+    }
+
+    def __init__(self, ctx: Parser, task: Task, logger: Logger) -> None:
+        self.context = ctx  # Parser Context
+        self.task = task  # Current assigned Task
+        self.logger = logger
+        self.affected_files: list[str] = []
+        self.__internal_state = True  # Faulty execution flag
+        self._type = "Custom"
+        self.handle_references()
+
+    def execute(self) -> None:
+        # Execution Block
+        pass
+
+    def rollback(self) -> None:
+        # Rollback Block
+        pass
+
+    def set_state(self, state: bool) -> None:
+        "Sets the state for the Internal Fault flag"
+        self.__internal_state = state
+
+    def get_state(self) -> bool:
+        "Returns the of the Internal Fault flag"
+        return self.__internal_state
+
+    def handle_references(self) -> None:
+        for key in self.task.keys():
+            if type(self.task[key]) == str and self.task[key].startswith("$"):
+                if "." in self.task[key]:
+                    _ = self.task[key].split(".")
+                    step = self.context._get_step_reference(self.task, _[0])
+                    self.task[key] = step[_[1]]
+                else:
+                    step = self.context._get_step_reference(self.task, self.task[key])
+                    self.task[key] = step[key]"""
+                )
 
         root_path = Path.expanduser("~")
         root_folders = os.listdir(root_path)
         if ".tasker" not in root_folders:
             os.mkdir(f"{root_path}/.tasker")
             os.mkdir(f"{root_path}/.tasker/Tasks")
+            os.mkdir(f"{root_path}/.tasker/Templates")
             create_initial_config(root_path)
         else:
-            tasker_folder = os.listdir(f"{Path.expanduser('~')}/.tasker")
-            if "config.json" not in tasker_folder:
+            tasker_folder = os.listdir(f"{root_path}/.tasker")
+            if "Tasks" not in tasker_folder:
+                os.mkdir(f"{root_path}/.tasker/Tasks")
+
+            if "Templates" not in tasker_folder:
+                os.mkdir(f"{root_path}/.tasker/Templates")
+
+            if ("config.json" not in tasker_folder) or (
+                "template.txt" not in tasker_folder
+            ):
                 create_initial_config(root_path)
 
     @staticmethod
@@ -326,3 +418,26 @@ class Parser:
     def open_file_for_edit(file: str) -> None:
         Parser.do_config()
         FileOpener(f"{Path.expanduser('~')}/.tasker/Tasks/{file}.tasker.json")
+
+    @staticmethod
+    def create_extension(name: str) -> None:
+        Parser.do_config()
+        root = Path.expanduser("~")
+        with open(f"{root}/.tasker/template.txt", "r") as template:
+            t = template.read()
+            t = t.replace("<name>", name)
+            _n = md5(f"{time()}_{name}".encode("UTF-8")).hexdigest()[:10]
+            f_name = f"extension_{_n}.py"
+            with open(f"{root}/.tasker/Templates/{f_name}", "w") as ex:
+                ex.write(t)
+                ex.close()
+            j: Settings = json.load(open(f"{root}/.tasker/config.json"))
+            j["extensions"].append(
+                {
+                    "name": name,
+                    "file": f_name,
+                    "path": f"{root}/.tasker/Templates/{f_name}",
+                }
+            )
+            json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
+            template.close()

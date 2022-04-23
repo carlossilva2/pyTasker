@@ -1,5 +1,10 @@
 from logging import Logger
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+
+try:
+    from typing import TypedDict
+except Exception:
+    from typing_extensions import TypedDict
 
 # Structure definitions
 OP_INSTRUCTION = ["name", "description", "tasks"]
@@ -15,6 +20,7 @@ OP_INPUT = ["question"]
 OP_ECHO = ["value"]
 OP_REQUEST = ["endpoint", "method", "!body", "!headers"]
 OP_REGISTRY = ["start_key", "key", "function", "!value", "!rename"]
+OP_CUSTOM = ["extension_name"]
 
 # Available Operations
 OPERATIONS = [
@@ -27,9 +33,10 @@ OPERATIONS = [
     "echo",
     "registry",
     "request",
+    "custom",
 ]
 LIST_OPERATIONS = Literal[
-    "copy", "zip", "move", "delete", "input", "echo", "registry", "request"
+    "copy", "zip", "move", "delete", "input", "echo", "registry", "request", "custom"
 ]
 
 
@@ -109,6 +116,13 @@ class Registry(TypedDict, total=False):
     rename: Optional[str]
 
 
+class Custom(TypedDict):
+    name: str
+    step: int
+    operation: Literal["custom"]
+    extension_name: str
+
+
 # Structure Definition for task
 class Task(TypedDict):
     name: str
@@ -136,7 +150,9 @@ class Task(TypedDict):
 class InstructionSet(TypedDict):
     name: str
     description: str
-    tasks: List[Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request, Registry]]
+    tasks: List[
+        Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request, Registry, Custom]
+    ]
 
 
 class ParserType:
@@ -203,13 +219,26 @@ class OperationType:
         pass
 
 
+class Extension(TypedDict):
+    name: str
+    file: str
+    path: str
+
+
 class Settings(TypedDict):
     current_location: str
     default_location: str
+    extensions: List[Extension]
+
+
+class CustomOperation(TypedDict):
+    summon: str
+    executable: OperationType
 
 
 DESTINATION_CHECK_MAP: Dict[str, bool] = {
     "copy": True,
+    "custom": False,
     "delete": True,
     "echo": False,
     "input": False,

@@ -4,7 +4,7 @@ from hashlib import md5
 from logging import Logger
 from os import listdir
 from time import time
-from typing import List, Union
+from typing import List, Literal, Union
 
 import questionary as qt
 from validators import ValidationFailure, url
@@ -14,11 +14,19 @@ from .types import *
 REFERENCES = []
 
 
-def ask_file_to_run(options: List[str]) -> Union[str, None]:
+def ask_file_to_run(
+    options: List[str], operation: Literal["execute", "edit"]
+) -> Union[str, None]:
     option = qt.select(
-        "Which InstructionSet do you want to execute?", choices=options, qmark="📁"
+        f"Which InstructionSet do you want to {operation}?", choices=options, qmark="📁"
     ).ask()
     return option if option != "nevermind..." else None
+
+
+def check_duplicate_names(file: str) -> str:
+    if f"{file}.tasker.json" in listdir(f"{Path.expanduser('~')}/.tasker/Tasks"):
+        return f"{file}_{md5(f'{time()}'.encode('UTF-8')).hexdigest()[:6]}"
+    return file
 
 
 def _create_text_or_autocomplete(
@@ -36,11 +44,12 @@ def _create_path_or_autocomplete(
     "Create a Path Question with/without Autocomplete based on the `choices`"
     if len(choices) == 0:
         return qt.text(message, qmark=mark)
-    return qt.path(message, choices=choices, qmark=mark, only_directories=True)
+    return qt.path(message, qmark=mark, only_directories=True)
 
 
 def create_template(logger: Logger) -> InstructionSet:
     copy_a = "Copy Action"
+    custom_a = "Custom Action"
     zip_a = "Zip Action"
     delete_a = "Delete Action"
     move_a = "Move Action"
@@ -59,16 +68,15 @@ def create_template(logger: Logger) -> InstructionSet:
         registry_a,
         request_a,
         zip_a,
+        custom_a,
         "Nothing else",
     ]
-    file_name: str = (
+    file_name: str = check_duplicate_names(
         qt.text("What name should the file have?", qmark="📘")
         .ask()
         .lower()
         .replace(" ", "_")
     )
-    if f"{file_name}.tasker.json" in listdir(f"{Path.expanduser('~')}/.tasker/Tasks"):
-        file_name = f"{file_name}_{md5(f'{time()}'.encode('UTF-8')).hexdigest()[:6]}"
     instruction_set["name"] = qt.text(
         "What's the name of the InstructionSet?", qmark="📘"
     ).ask()
@@ -118,6 +126,10 @@ def create_template(logger: Logger) -> InstructionSet:
         elif option == registry_a:
             instruction_set["tasks"].append(
                 create_registry_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == custom_a:
+            instruction_set["tasks"].append(
+                create_custom_task(len(instruction_set["tasks"]), logger)
             )
     save = qt.confirm("Do you want save?", qmark="📕", default=False).ask()
     if save:
@@ -388,4 +400,19 @@ def create_registry_task(step: int, logger: Logger) -> Registry:
     REFERENCES.append(f"${step}.key")
     REFERENCES.append(f"${step}.type")
     REFERENCES.append(f"${step}.value")
+    return ans
+
+
+def create_custom_task(step: int, logger: Logger) -> Custom:
+    mark = "🛠️"
+    ans: Custom = {"name": "", "step": step, "operation": "custom", "extension_name": ""}
+    settings: Settings = json.load(
+        open(f"{Path.expanduser('~')}/.tasker/config.json", "r")
+    )
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["extension_name"] = qt.select(
+        "Select an extension:",
+        choices=[e["name"] for e in settings["extensions"]],
+        qmark=mark,
+    ).ask()
     return ans

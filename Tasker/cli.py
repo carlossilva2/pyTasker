@@ -67,6 +67,12 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
         help="Description for Task template.",
     )
     options.add_argument(
+        "-e",
+        "--Extension",
+        action="store_true",
+        help="",
+    )
+    options.add_argument(
         "-nw",
         "--No-Warning",
         action="store_true",

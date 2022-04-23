@@ -24,12 +24,15 @@ How? You're in luck. Just create an InstructionSet (you can use the CLI command 
     - [Input Action](#input-action)
     - [Echo Action](#echo-action)
     - [Request Action](#request-action)
+    - [Registry Action](#registry-action)
   - [Usage](#usage)
   - [Roadmap](#roadmap)
     - [Actions in Pipeline](#actions-in-pipeline)
     - [General Improvements](#general-improvements)
   - [Support](#support)
 
+
+For more detailed information visit the [Documentation](https://cmsilva.gitbook.io/pytasker/)
 ## Installation
 
 There are 2 ways of installation:
@@ -70,7 +73,7 @@ Example:
 
 ## Key Features
 
-For extra information use `tasker help`
+For extra information use `tasker -h`
 
 ### Copy Action
 
@@ -165,6 +168,22 @@ For extra information use `tasker help`
     "method": "<get | post | put | delete>", //Must be only 1 option
     "!body": {}, //Optional parameter
     "!headers": {} //Optional Parameter
+}
+```
+
+### Registry Action
+
+```json
+{
+    "name": "<Name of Step>",
+    "step": 0,
+    "operation": "registry",
+    "start_key": "<classes-root | current-user | current-config | local-machine | users>",
+    "key": "<path to the key>",
+    "function": "<get | set | create | backup>",
+    "type": "<sz | multisz | none | binary | dword | qword>",
+    "value": "<data>",
+    "rename": "<file name for backup>"
 }
 ```
 
