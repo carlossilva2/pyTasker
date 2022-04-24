@@ -144,6 +144,7 @@ class Task(TypedDict):
         "classes-root", "current-user", "current-config", "local-machine", "users"
     ]
     function: Literal["get", "set", "create", "backup"]
+    extension_name: str
 
 
 # Structure Definition for instruction_set
@@ -155,11 +156,30 @@ class InstructionSet(TypedDict):
     ]
 
 
+class Extension(TypedDict):
+    name: str
+    file: str
+    path: str
+
+
+class Alias(TypedDict):
+    name: str
+    path: str
+
+
+class Settings(TypedDict):
+    current_location: str
+    default_location: str
+    extensions: List[Extension]
+    alias: List[Alias]
+
+
 class ParserType:
 
     system: str
     task: InstructionSet
     logger: Logger
+    settings: Settings
 
     def execute(self, task: str, logger: Logger, default_location: str) -> None:
         pass
@@ -171,28 +191,37 @@ class ParserType:
         pass
 
     def __execute(self, task: Task) -> bool:
-        pass
+        return True
 
     def __check_destination_path(self, task: Task) -> None:
         pass
 
     def __analyse_keys(self) -> Tuple[bool, str, str, str]:
-        pass
+        return (True, "", "", "")
 
     def __optional_parameters(self) -> None:
         pass
 
     def _get_all_file_paths(self, directory: str) -> List[str]:
-        pass
+        return []
 
     def _get_file_name(self, p: str) -> str:
-        pass
+        return ""
 
     def __change_relative_locations(self, home: str) -> None:
         pass
 
     def _get_step_reference(self, task: Task, ref: str) -> Task:
         pass
+
+    def __first_execution_routine(self) -> None:
+        pass
+
+    def __get_configs(self) -> Settings:
+        pass
+
+    def __load_extensions(self) -> None:
+        return []
 
 
 class OperationType:
@@ -217,24 +246,6 @@ class OperationType:
     def set_state(self, state: bool) -> None:
         "Sets the state for the Internal Fault flag"
         pass
-
-
-class Extension(TypedDict):
-    name: str
-    file: str
-    path: str
-
-
-class Alias(TypedDict):
-    name: str
-    path: str
-
-
-class Settings(TypedDict):
-    current_location: str
-    default_location: str
-    extensions: List[Extension]
-    alias: List[Alias]
 
 
 class CustomOperation(TypedDict):

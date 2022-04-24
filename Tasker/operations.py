@@ -8,6 +8,7 @@ import requests
 
 from Tasker.regutils import backup
 
+from .common import alias, get_file_name, ref
 from .inspector import implements
 from .types import OperationType as Operation
 from .types import ParserType as Parser
@@ -26,14 +27,8 @@ except Exception:
     not_imported = True
 
 
-def get_file_name(p: str) -> str:
-    if "/" in p:
-        return p.split("/")[-1]
-    return p
-
-
 @implements(Operation)
-class Copy:
+class Copy(Operation):
     "Copy Action"
 
     __annotations__ = {
@@ -48,7 +43,8 @@ class Copy:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "copy"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         files = (
@@ -99,20 +95,9 @@ class Copy:
                 f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}"
             )
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Move:
+class Move(Operation):
     "Move Action"
 
     __annotations__ = {
@@ -127,7 +112,8 @@ class Move:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "move"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         files = self.context._get_all_file_paths(self.task["origin"])
@@ -170,20 +156,9 @@ class Move:
             self.affected_files.append(ori_path)
             shutil.move(f"{ori_path}", f"{self.task['destination']}/{get_file_name(f)}")
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Delete:
+class Delete(Operation):
     "Delete Action"
 
     __annotations__ = {
@@ -198,7 +173,8 @@ class Delete:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "delete"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         fp = []
@@ -229,20 +205,9 @@ class Delete:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Zip:
+class Zip(Operation):
     "Zip Action"
 
     __annotations__ = {
@@ -257,7 +222,8 @@ class Zip:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "zip"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         fp = []
@@ -320,17 +286,6 @@ class Zip:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
 class Command:
@@ -361,7 +316,7 @@ class Command:
 
 
 @implements(Operation)
-class Registry:
+class Registry(Operation):
     "Registry Action"
 
     __annotations__ = {
@@ -379,7 +334,8 @@ class Registry:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "registry"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         self.path = ">".join([self.task["start_key"], self.task["key"]])
@@ -421,20 +377,9 @@ class Registry:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Input:
+class Input(Operation):
     "Input Action"
 
     __annotations__ = {
@@ -450,7 +395,8 @@ class Input:
         self.value = None  # where the value of the Input will be kept
         self.__internal_state = True  # Faulty execution flag
         self._type = "input"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         question = input(self.task["question"])
@@ -467,20 +413,9 @@ class Input:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Echo:
+class Echo(Operation):
     "Echo Action"
 
     __annotations__ = {"name": "Echo Action", "intent": "Print a value to the console"}
@@ -492,7 +427,8 @@ class Echo:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "echo"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
 
     def execute(self) -> None:
         value = self.task["value"]
@@ -511,20 +447,9 @@ class Echo:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
 
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]
-
 
 @implements(Operation)
-class Request:
+class Request(Operation):
     "Request Action"
 
     __annotations__ = {
@@ -541,7 +466,8 @@ class Request:
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
         self._type = "request"
-        self.handle_references()
+        ref(self)
+        alias(self, self.context.settings)
         self.response = None
 
     def execute(self) -> None:
@@ -585,14 +511,3 @@ class Request:
     def get_state(self) -> bool:
         "Returns the of the Internal Fault flag"
         return self.__internal_state
-
-    def handle_references(self) -> None:
-        for key in self.task.keys():
-            if type(self.task[key]) == str and self.task[key].startswith("$"):
-                if "." in self.task[key]:
-                    _ = self.task[key].split(".")
-                    step = self.context._get_step_reference(self.task, _[0])
-                    self.task[key] = step[_[1]]
-                else:
-                    step = self.context._get_step_reference(self.task, self.task[key])
-                    self.task[key] = step[key]

@@ -2,13 +2,13 @@ import json
 import os.path as Path
 from hashlib import md5
 from logging import Logger
-from os import listdir
 from time import time
 from typing import List, Literal, Union
 
 import questionary as qt
 from validators import ValidationFailure, url
 
+from .common import check_duplicate_names
 from .types import *
 
 REFERENCES = []
@@ -21,12 +21,6 @@ def ask_file_to_run(
         f"Which InstructionSet do you want to {operation}?", choices=options, qmark="📁"
     ).ask()
     return option if option != "nevermind..." else None
-
-
-def check_duplicate_names(file: str) -> str:
-    if f"{file}.tasker.json" in listdir(f"{Path.expanduser('~')}/.tasker/Tasks"):
-        return f"{file}_{md5(f'{time()}'.encode('UTF-8')).hexdigest()[:6]}"
-    return file
 
 
 def _create_text_or_autocomplete(
@@ -415,4 +409,22 @@ def create_custom_task(step: int, logger: Logger) -> Custom:
         choices=[e["name"] for e in settings["extensions"]],
         qmark=mark,
     ).ask()
+    exec_additional = True
+    t = 0
+    while exec_additional:
+        sec = qt.confirm(
+            f"Do you want to add {'a' if t == 0 else 'another'} parameter?",
+            qmark=mark,
+            default=False,
+        ).ask()
+        if not sec:
+            exec_additional = False
+        else:
+            name = _create_text_or_autocomplete(
+                "What's the name of the parameter?", mark, REFERENCES
+            ).ask()
+            ans[name] = _create_text_or_autocomplete(
+                f"What's the value of {name}?", mark, REFERENCES
+            ).ask()
+            t += 1
     return ans
