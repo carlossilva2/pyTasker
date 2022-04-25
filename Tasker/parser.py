@@ -13,6 +13,7 @@ from webbrowser import open as FileOpener
 import chalk
 
 from .common import Timer
+from .inspector import implements
 from .operations import *
 from .types import (
     DESTINATION_CHECK_MAP,
@@ -39,6 +40,7 @@ from .types import (
 )
 
 
+@implements(ParserType)
 class Parser(ParserType):
     def __init__(self, task: str, logger: Logger) -> None:
         self.execution = {}
@@ -367,7 +369,7 @@ class Parser(ParserType):
             self.__internal_state = True  # Faulty execution flag
             self._type = "Custom"
             ref(self)
-            alias(self, self.context.settings)
+            alias(self)
 
         def execute(self) -> None:
             # Execution Block

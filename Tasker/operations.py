@@ -44,7 +44,7 @@ class Copy(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "copy"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         files = (
@@ -113,7 +113,7 @@ class Move(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "move"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         files = self.context._get_all_file_paths(self.task["origin"])
@@ -174,7 +174,7 @@ class Delete(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "delete"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         fp = []
@@ -223,7 +223,7 @@ class Zip(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "zip"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         fp = []
@@ -288,7 +288,7 @@ class Zip(Operation):
 
 
 @implements(Operation)
-class Command:
+class Command(Operation):
     "Command Action"
 
     __annotations__ = {"name": "Command Action", "intent": "Execute CLI commands"}
@@ -299,9 +299,16 @@ class Command:
         self.logger = logger
         self.affected_files: list[str] = []
         self.__internal_state = True  # Faulty execution flag
+        self.output = "Nothing is stored"
+        ref(self)
+        alias(self)
 
     def execute(self) -> None:
-        raise NotImplementedError("Command action has not been implemented yet")
+        if self.task["output"]:
+            self.output = os.popen(self.task["command"]).read()
+        else:
+            os.system(self.task["command"])
+        # raise NotImplementedError("Command action has not been implemented yet")
 
     def rollback(self) -> None:
         pass
@@ -335,7 +342,7 @@ class Registry(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "registry"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         self.path = ">".join([self.task["start_key"], self.task["key"]])
@@ -396,7 +403,7 @@ class Input(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "input"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         question = input(self.task["question"])
@@ -428,7 +435,7 @@ class Echo(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "echo"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
 
     def execute(self) -> None:
         value = self.task["value"]
@@ -467,7 +474,7 @@ class Request(Operation):
         self.__internal_state = True  # Faulty execution flag
         self._type = "request"
         ref(self)
-        alias(self, self.context.settings)
+        alias(self)
         self.response = None
 
     def execute(self) -> None:

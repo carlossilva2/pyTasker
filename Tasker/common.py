@@ -3,11 +3,13 @@ from hashlib import md5
 from os import listdir
 from time import time
 
-from .types import Alias, OperationType, Settings
+from .types import Alias, OperationType
+
+FORBIDDEN_REF_ALIAS = ["name", "step", "operation"]
 
 
 def ref(self: OperationType) -> None:
-    for key in self.task.keys():
+    for key in [_ for _ in self.task.keys() if _ not in FORBIDDEN_REF_ALIAS]:
         if type(self.task[key]) == str and self.task[key].startswith("$"):
             if "." in self.task[key]:
                 _ = self.task[key].split(".")
@@ -18,14 +20,14 @@ def ref(self: OperationType) -> None:
                 self.task[key] = step[key]
 
 
-def alias(self: OperationType, settings: Settings) -> None:
-    for key in self.task.keys():
+def alias(self: OperationType) -> None:
+    for key in [_ for _ in self.task.keys() if _ not in FORBIDDEN_REF_ALIAS]:
         if type(self.task[key]) == str and self.task[key].startswith("&"):
             p = self.task[key].split("/")
             trigger = p[0].replace("&", "")
             p = p[1:] if len(p) > 1 else []
             alias: Alias = next(
-                (p for p in settings["alias"] if p["name"] == trigger),
+                (p for p in self.context.settings["alias"] if p["name"] == trigger),
                 Alias(name="home", path=Path.expanduser("~")),
             )
             self.task[key] = "/".join(

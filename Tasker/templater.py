@@ -42,6 +42,7 @@ def _create_path_or_autocomplete(
 
 
 def create_template(logger: Logger) -> InstructionSet:
+    command_a = "Command Action"
     copy_a = "Copy Action"
     custom_a = "Custom Action"
     zip_a = "Zip Action"
@@ -51,10 +52,11 @@ def create_template(logger: Logger) -> InstructionSet:
     echo_a = "Echo Action"
     request_a = "Request Action"
     registry_a = "Registry Action"
-    instruction_set: InstructionSet = {"name": "", "description": "", "tasks": []}
+    instruction_set: InstructionSet = InstructionSet(name="", description="", tasks=[])
     no_break = True
     available_actions = [
         copy_a,
+        command_a,
         delete_a,
         echo_a,
         input_a,
@@ -92,6 +94,10 @@ def create_template(logger: Logger) -> InstructionSet:
         elif option == copy_a:
             instruction_set["tasks"].append(
                 create_copy_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == command_a:
+            instruction_set["tasks"].append(
+                create_command_task(len(instruction_set["tasks"]), logger)
             )
         elif option == zip_a:
             instruction_set["tasks"].append(
@@ -427,4 +433,28 @@ def create_custom_task(step: int, logger: Logger) -> Custom:
                 f"What's the value of {name}?", mark, REFERENCES
             ).ask()
             t += 1
+    return ans
+
+
+def create_command_task(step: int, logger: Logger) -> Custom:
+    mark = "🖥️"
+    ans: Command = {
+        "name": "",
+        "step": step,
+        "operation": "command",
+        "output": False,
+        "command": "",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["output"] = qt.confirm(
+        "Do you want to save the output of command?",
+        qmark=mark,
+        default=False,
+    ).ask()
+    ans["command"] = _create_text_or_autocomplete(
+        "What command do you want to execute?", mark, REFERENCES
+    ).ask()
+
+    REFERENCES.append(f"${step}.output")
+    REFERENCES.append(f"${step}.command")
     return ans
