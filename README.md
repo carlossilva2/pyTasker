@@ -221,7 +221,7 @@ This is a project I'm working on my free time, however I have some new Actions i
 - ~~Input Action~~
 - Command Action
 - Encrypt Action
-- Registry Action (for Windows)
+- ~~Registry Action (for Windows)~~
 
 ### General Improvements
 
