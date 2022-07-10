@@ -30,7 +30,18 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
     parser.add_argument(
         "action",
         help="What action should Tasker perform",
-        choices=["list", "execute", "create", "edit", "extension", "alias"],
+        choices=[
+            "list",
+            "execute",
+            "create",
+            "edit",
+            "extension",
+            "alias",
+            "install",
+            "uninstall",
+            "remote-list",
+            "remote-search",
+        ],
     )
 
     options = parser.add_argument_group("parameters")
@@ -41,6 +52,14 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
         metavar="",
         required=False,
         help=f"Instruction Set name flag. Use {chalk.green('`tasker list`')} for a list with all InstructionSets",
+    )
+    options.add_argument(
+        "-e",
+        "--Extension",
+        type=str,
+        metavar="",
+        required=False,
+        help="Usable only on `install`",
     )
     options.add_argument(
         "-f",

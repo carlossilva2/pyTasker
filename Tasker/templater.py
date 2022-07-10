@@ -42,6 +42,9 @@ def _create_path_or_autocomplete(
 
 
 def create_template(logger: Logger) -> InstructionSet:
+    settings: Settings = json.load(
+        open(f"{Path.expanduser('~')}/.tasker/config.json", "r")
+    )
     command_a = "Command Action"
     copy_a = "Copy Action"
     custom_a = "Custom Action"
@@ -52,6 +55,8 @@ def create_template(logger: Logger) -> InstructionSet:
     echo_a = "Echo Action"
     request_a = "Request Action"
     registry_a = "Registry Action"
+    hold_a = "Hold Action"
+    sleep_a = "Sleep Action"
     instruction_set: InstructionSet = InstructionSet(name="", description="", tasks=[])
     no_break = True
     available_actions = [
@@ -61,12 +66,18 @@ def create_template(logger: Logger) -> InstructionSet:
         echo_a,
         input_a,
         move_a,
-        registry_a,
         request_a,
         zip_a,
         custom_a,
         "Nothing else",
     ]
+    installed = [_["name"] for _ in settings["extensions"]]
+    if "Registry" in installed:
+        available_actions.insert(0, registry_a)
+    if "Sleep" in installed:
+        available_actions.insert(0, sleep_a)
+    if "Hold" in installed:
+        available_actions.insert(0, hold_a)
     file_name: str = check_duplicate_names(
         qt.text("What name should the file have?", qmark="📘")
         .ask()
@@ -126,6 +137,14 @@ def create_template(logger: Logger) -> InstructionSet:
         elif option == registry_a:
             instruction_set["tasks"].append(
                 create_registry_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == hold_a:
+            instruction_set["tasks"].append(
+                create_hold_task(len(instruction_set["tasks"]), logger)
+            )
+        elif option == sleep_a:
+            instruction_set["tasks"].append(
+                create_sleep_task(len(instruction_set["tasks"]), logger)
             )
         elif option == custom_a:
             instruction_set["tasks"].append(
@@ -336,12 +355,13 @@ def create_request_task(step: int, logger: Logger) -> Request:
     return ans
 
 
-def create_registry_task(step: int, logger: Logger) -> Registry:
+def create_registry_task(step: int, logger: Logger):
     mark = "🗄️"
-    ans: Registry = {
+    ans = {
         "name": "",
         "step": step,
-        "operation": "registry",
+        "operation": "custom",
+        "extension_name": "Registry",
         "function": "get",
         "key": "",
         "start_key": "local-machine",
@@ -400,6 +420,43 @@ def create_registry_task(step: int, logger: Logger) -> Registry:
     REFERENCES.append(f"${step}.key")
     REFERENCES.append(f"${step}.type")
     REFERENCES.append(f"${step}.value")
+    return ans
+
+
+def create_hold_task(step: int, logger: Logger):
+    mark = "🛑"
+    ans = {
+        "name": "",
+        "step": step,
+        "operation": "custom",
+        "extension_name": "Hold",
+        "type": "",
+        "condition": "",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["type"] = qt.select(
+        "Select a type of operation:",
+        choices=["time", "date", "datetime"],
+        qmark=mark,
+    ).ask()
+    ans["condition"] = qt.text("What's the Hold Condition?", qmark=mark).ask()
+    REFERENCES.append(f"${step}.type")
+    REFERENCES.append(f"${step}.condition")
+    return ans
+
+
+def create_sleep_task(step: int, logger: Logger):
+    mark = "💤"
+    ans = {
+        "name": "",
+        "step": step,
+        "operation": "custom",
+        "extension_name": "Sleep",
+        "amount": "",
+    }
+    ans["name"] = qt.text("What's the name of the Task?", qmark=mark).ask()
+    ans["condition"] = int(qt.text("How long should it sleep?", qmark=mark).ask())
+    REFERENCES.append(f"${step}.amount")
     return ans
 
 

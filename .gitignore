@@ -27,3 +27,5 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+regutils.py
