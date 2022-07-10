@@ -5,14 +5,15 @@ import platform
 import sys
 from hashlib import md5
 from importlib.machinery import SourceFileLoader as importer
-from logging import Logger
+from logging import WARNING, Logger, getLogger
 from time import time
 from typing import List, Literal, Union
 from webbrowser import open as FileOpener
 
 import chalk
+from requests import get
 
-from .common import Timer
+from .common import Timer, pip, pip_freeze
 from .inspector import implements
 from .operations import *
 from .types import (
@@ -25,7 +26,6 @@ from .types import (
     OP_INPUT,
     OP_INSTRUCTION,
     OP_MOVE,
-    OP_REGISTRY,
     OP_REQUEST,
     OP_TASK,
     OP_ZIP,
@@ -146,10 +146,6 @@ class Parser(ParserType):
                 r = Request(self, task, self.logger)
                 self.__operation_stack.append(r)
                 r.execute()
-            elif task["operation"] == "registry":
-                reg = Registry(self, task, self.logger)
-                self.__operation_stack.append(reg)
-                reg.execute()
             elif task["operation"] == "custom":
                 ex = next(
                     (e for e in self.extensions if e["summon"] == task["extension_name"]),
@@ -468,3 +464,94 @@ class Parser(ParserType):
                 sys.exit(1)
         settings["alias"].append(alias)
         json.dump(settings, open(f"{root}/.tasker/config.json", "w"), indent=4)
+
+    @staticmethod
+    def install_remote_extension(extension: str, logger: Logger) -> bool:
+        Parser.do_config()
+        root = Path.expanduser("~")
+        # Remove DEBUG WARNINGS
+        getLogger("requests").setLevel(WARNING)
+        getLogger("urllib3").setLevel(WARNING)
+        # Get Context file
+        context = get(
+            "https://raw.githubusercontent.com/carlossilva2/pyTasker-actions/main/context.json"
+        ).json()
+        # Check if extension exists on remote
+        if extension not in context.keys():
+            logger.error("Extension does not exist. Check spelling")
+            return False
+        # Check if extension is allowed on Current OS
+        os = platform.system()
+        if context[extension]["platform"] != os and context[extension]["platform"] != "*":
+            logger.error(f"Extension cannot be installed in '{os}'")
+            return False
+        # Check for extension dependencies
+        existing_modules = pip_freeze()
+        for dep in context[extension]["dependencies"]:
+            if dep not in existing_modules:
+                pip(dep)
+        # Retrieve Template
+        template = get(context[extension]["extension"]).text
+        # Install Extension locally
+        _n = md5(f"{time()}_{extension}".encode("UTF-8")).hexdigest()[:10]
+        f_name = f"extension_{_n}.py"
+        with open(f"{root}/.tasker/Templates/{f_name}", "w") as ex:
+            ex.write(template)
+            ex.close()
+        j: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        j["extensions"].append(
+            {
+                "name": extension,
+                "file": f_name,
+                "path": f"{root}/.tasker/Templates/{f_name}",
+            }
+        )
+        json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
+        return True
+
+    @staticmethod
+    def uninstall_extension(extension: str, logger: Logger) -> None:
+        Parser.do_config()
+        root = Path.expanduser("~")
+        j: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        if extension not in [_["name"] for _ in j["extensions"]]:
+            logger.error(f"{extension} is not installed")
+            sys.exit(1)
+        index = None
+        for i, ex in enumerate(j["extensions"]):
+            if ex["name"] == extension:
+                index = i
+                os.remove(ex["path"])
+                break
+        j["extensions"].pop(index)
+        json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
+        logger.debug("Extension removed successfully")
+
+    @staticmethod
+    def search_remote(extension: str, logger: Logger) -> None:
+        Parser.do_config()
+        # Remove DEBUG WARNINGS
+        getLogger("requests").setLevel(WARNING)
+        getLogger("urllib3").setLevel(WARNING)
+        # Get Context file
+        context = get(
+            "https://raw.githubusercontent.com/carlossilva2/pyTasker-actions/main/context.json"
+        ).json()
+        # Check if extension exists on remote
+        if extension not in context.keys():
+            logger.error("Extension does not exist. Check spelling")
+            sys.exit(1)
+        logger.debug(f"{extension}=={context[extension]['version']}")
+
+    @staticmethod
+    def list_remote(logger: Logger) -> None:
+        Parser.do_config()
+        # Remove DEBUG WARNINGS
+        getLogger("requests").setLevel(WARNING)
+        getLogger("urllib3").setLevel(WARNING)
+        # Get Context file
+        context = get(
+            "https://raw.githubusercontent.com/carlossilva2/pyTasker-actions/main/context.json"
+        ).json()
+        for extension in context.keys():
+            logger.debug(f"{extension}=={context[extension]['version']}")

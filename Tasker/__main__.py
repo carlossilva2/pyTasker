@@ -60,6 +60,24 @@ def main() -> None:
             )
         else:
             logger.error("Path and Name flags are required when creating Aliases")
+    elif args.action == "install":
+        if args.Extension is None:
+            logger.error("Missing Extension flag `-e`. Check Help for command syntax")
+            sys.exit(1)
+        Parser.install_remote_extension(args.Extension, logger)
+    elif args.action == "uninstall":
+        if args.Extension is None:
+            logger.error("Missing Extension flag `-e`. Check Help for command syntax")
+            sys.exit(1)
+        Parser.uninstall_extension(args.Extension, logger)
+    elif args.action == "remote-search" or args.action == "remote-list":
+        if args.action == "remote-search":
+            if args.Extension is None:
+                logger.error("Missing Extension flag `-e`. Check Help for command syntax")
+                sys.exit(1)
+            Parser.search_remote(args.Extension, logger)
+        else:
+            Parser.list_remote(logger)
     else:
         logger.error("Check Help for command syntax")
 

@@ -1,4 +1,6 @@
 import os.path as Path
+import subprocess
+import sys
 from hashlib import md5
 from os import listdir
 from time import time
@@ -73,3 +75,14 @@ class Timer:
         self.start_time = 0.0
         self.end_time = 0.0
         self.ellapsed_time = ""
+
+
+def pip(package: str):
+    return subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+
+def pip_freeze() -> list[str]:
+    return [
+        _.decode().split("==")[0]
+        for _ in subprocess.check_output([sys.executable, "-m", "pip", "freeze"]).split()
+    ]

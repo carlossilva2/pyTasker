@@ -19,7 +19,7 @@ OP_ZIP = ["target", "rename", "!deflate", "!destination"]
 OP_INPUT = ["question"]
 OP_ECHO = ["value"]
 OP_REQUEST = ["endpoint", "method", "!body", "!headers"]
-OP_REGISTRY = ["start_key", "key", "function", "!value", "!rename"]
+# OP_REGISTRY = ["start_key", "key", "function", "!value", "!rename"]
 OP_CUSTOM = ["extension_name"]
 
 # Available Operations
@@ -111,7 +111,7 @@ class Request(TypedDict, total=False):
     headers: Optional[Union[str, Dict[str, Any], None]]
 
 
-class Registry(TypedDict, total=False):
+""" class Registry(TypedDict, total=False):
     name: str
     step: int
     operation: Literal["registry"]
@@ -122,7 +122,7 @@ class Registry(TypedDict, total=False):
     function: Literal["get", "set", "create", "backup"]
     type: Literal["sz", "multisz", "none", "binary", "dword", "qword"]
     value: Optional[Union[str, int]]
-    rename: Optional[str]
+    rename: Optional[str] """
 
 
 class Custom(TypedDict):
@@ -171,9 +171,7 @@ class InstructionSet(TypedDict):
     name: str
     description: str
     tasks: List[
-        Union[
-            Task, Copy, Move, Zip, Delete, Input, Echo, Request, Registry, Custom, Command
-        ]
+        Union[Task, Copy, Move, Zip, Delete, Input, Echo, Request, Custom, Command]
     ]
 
 
@@ -313,7 +311,6 @@ DESTINATION_CHECK_MAP: Dict[str, bool] = {
     "echo": False,
     "input": False,
     "move": True,
-    "registry": False,
     "request": False,
     "zip": True,
 }
