@@ -1,4 +1,4 @@
-requests==2.27.1
+requests==2.31.0
 pychalk==2.0.1
 questionary==1.10.0
 validators==0.18.2
