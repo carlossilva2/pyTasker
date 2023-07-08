@@ -64,7 +64,7 @@ def main() -> None:
         if args.Extension is None:
             logger.error("Missing Extension flag `-e`. Check Help for command syntax")
             sys.exit(1)
-        Parser.install_remote_extension(args.Extension, logger)
+        Parser.install_remote_extension(args.Extension, logger, upgrade=args.Update)
     elif args.action == "uninstall":
         if args.Extension is None:
             logger.error("Missing Extension flag `-e`. Check Help for command syntax")

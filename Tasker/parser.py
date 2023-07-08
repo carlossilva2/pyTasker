@@ -415,6 +415,12 @@ class Parser(ParserType):
         ]
 
     @staticmethod
+    def get_task_descriptor(task: str) -> Task:
+        return json.load(
+            open(f"{Path.expanduser('~')}/.tasker/Tasks/{task}.tasker.json", "r")
+        )
+
+    @staticmethod
     def create_new_task(file_name: str, name: str, description: str) -> InstructionSet:
         Parser.do_config()
         i: InstructionSet = InstructionSet(name=name, description=description, tasks=[])
@@ -448,6 +454,7 @@ class Parser(ParserType):
                     "name": name,
                     "file": f_name,
                     "path": f"{root}/.tasker/Templates/{f_name}",
+                    "version": 0,
                 }
             )
             json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
@@ -466,12 +473,62 @@ class Parser(ParserType):
         json.dump(settings, open(f"{root}/.tasker/config.json", "w"), indent=4)
 
     @staticmethod
-    def install_remote_extension(extension: str, logger: Logger) -> bool:
+    def install_remote_extension(
+        extension: str, logger: Logger, upgrade: bool = False
+    ) -> bool:
+        def install(context: dict, extension: str, logger: Logger) -> bool:
+            # Check if extension is allowed on Current OS
+            os = platform.system()
+            if (
+                context[extension]["platform"] != os
+                and context[extension]["platform"] != "*"
+            ):
+                logger.error(f"Extension cannot be installed in '{os}'")
+                return False
+            # Check for extension dependencies
+            existing_modules = pip_freeze()
+            for dep in context[extension]["dependencies"]:
+                if dep not in existing_modules:
+                    pip(dep)
+            # Retrieve Template
+            template = get(context[extension]["extension"]).text
+            # Install Extension locally
+            _n = md5(f"{time()}_{extension}".encode("UTF-8")).hexdigest()[:10]
+            f_name = f"extension_{_n}.py"
+            with open(f"{root}/.tasker/Templates/{f_name}", "w") as ex:
+                ex.write(template)
+                ex.close()
+            j["extensions"].append(
+                {
+                    "name": extension,
+                    "description": context[extension]["description"],
+                    "file": f_name,
+                    "path": f"{root}/.tasker/Templates/{f_name}",
+                    "version": context[extension]["version"],
+                }
+            )
+            json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
+            return True
+
         Parser.do_config()
         root = Path.expanduser("~")
         # Remove DEBUG WARNINGS
         getLogger("requests").setLevel(WARNING)
         getLogger("urllib3").setLevel(WARNING)
+        j: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        index = None
+        for i, ex in enumerate(j["extensions"]):
+            if ex["name"] == extension:
+                index = i
+                break
+        # Check if extension is already installed
+        if (
+            index != None
+            and extension in [_["name"] for _ in j["extensions"]]
+            and upgrade is False
+        ):
+            logger.error("Extension already installed")
+            return False
         # Get Context file
         context = get(
             "https://raw.githubusercontent.com/carlossilva2/pyTasker-actions/main/context.json"
@@ -480,34 +537,92 @@ class Parser(ParserType):
         if extension not in context.keys():
             logger.error("Extension does not exist. Check spelling")
             return False
-        # Check if extension is allowed on Current OS
-        os = platform.system()
-        if context[extension]["platform"] != os and context[extension]["platform"] != "*":
-            logger.error(f"Extension cannot be installed in '{os}'")
-            return False
-        # Check for extension dependencies
-        existing_modules = pip_freeze()
-        for dep in context[extension]["dependencies"]:
-            if dep not in existing_modules:
-                pip(dep)
-        # Retrieve Template
-        template = get(context[extension]["extension"]).text
-        # Install Extension locally
-        _n = md5(f"{time()}_{extension}".encode("UTF-8")).hexdigest()[:10]
-        f_name = f"extension_{_n}.py"
-        with open(f"{root}/.tasker/Templates/{f_name}", "w") as ex:
-            ex.write(template)
-            ex.close()
+        # Check for update
+        if (
+            index != None
+            and j["extensions"][index]["version"] == context[extension]["version"]
+            and upgrade
+        ):
+            logger.debug("Already up to date")
+            return True
+        if (
+            index != None
+            and j["extensions"][index]["version"] < context[extension]["version"]
+            and upgrade
+        ):
+            logger.debug(f"Updating '{extension}'....")
+            Parser.uninstall_extension(extension, logger)
+            return install(context, extension, logger)
+        else:
+            return install(context, extension, logger)
+
+    @staticmethod
+    def install_local_extension(descriptor: dict, logger: Logger, upgrade: bool = False):
+        def install(context: dict, logger: Logger) -> bool:
+            # Check if extension is allowed on Current OS
+            os = platform.system()
+            if context["platform"] != os and context["platform"] != "*":
+                logger.error(f"Extension cannot be installed in '{os}'")
+                return False
+            # Check for extension dependencies
+            existing_modules = pip_freeze()
+            for dep in context["dependencies"]:
+                if dep not in existing_modules:
+                    pip(dep)
+            # Retrieve Template
+            template = context["extension"]
+            # Install Extension locally
+            _n = md5(f"{time()}_{context['name']}".encode("UTF-8")).hexdigest()[:10]
+            f_name = f"extension_{_n}.py"
+            with open(f"{root}/.tasker/Templates/{f_name}", "w") as ex:
+                ex.write(template)
+                ex.close()
+            j["extensions"].append(
+                {
+                    "name": context["name"],
+                    "file": f_name,
+                    "description": context["description"],
+                    "path": f"{root}/.tasker/Templates/{f_name}",
+                    "version": context["version"],
+                }
+            )
+            json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
+            return True
+
+        Parser.do_config()
+        root = Path.expanduser("~")
         j: Settings = json.load(open(f"{root}/.tasker/config.json"))
-        j["extensions"].append(
-            {
-                "name": extension,
-                "file": f_name,
-                "path": f"{root}/.tasker/Templates/{f_name}",
-            }
-        )
-        json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
-        return True
+        index = None
+        for i, ex in enumerate(j["extensions"]):
+            if ex["name"] == descriptor["name"]:
+                index = i
+                break
+        # Check if extension is already installed
+        if (
+            index != None
+            and descriptor["name"] in [_["name"] for _ in j["extensions"]]
+            and upgrade is False
+        ):
+            logger.error("Extension already installed")
+            return False
+        # Check for update
+        if (
+            index != None
+            and j["extensions"][index]["version"] == descriptor["version"]
+            and upgrade
+        ):
+            logger.debug("Already up to date")
+            return True
+        if (
+            index != None
+            and j["extensions"][index]["version"] < descriptor["version"]
+            and upgrade
+        ):
+            logger.debug(f"Updating '{descriptor['name']}'....")
+            Parser.uninstall_extension(descriptor["name"], logger)
+            return install(descriptor, logger)
+        else:
+            return install(descriptor, logger)
 
     @staticmethod
     def uninstall_extension(extension: str, logger: Logger) -> None:
@@ -555,3 +670,4 @@ class Parser(ParserType):
         ).json()
         for extension in context.keys():
             logger.debug(f"{extension}=={context[extension]['version']}")
+        return context

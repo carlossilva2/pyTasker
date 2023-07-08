@@ -111,6 +111,12 @@ def get_args(version: str, logger: logging.Logger) -> argparse.Namespace:
         action="store_true",
         help="Disables normal logging, only shows Warnings and Errors.",
     )
+    options.add_argument(
+        "-u",
+        "--Update",
+        action="store_true",
+        help="Indicates that Extension should be updated.",
+    )
     args = parser.parse_args()
     if args.No_Warning:
         env["-No-Warning"] = "1"
