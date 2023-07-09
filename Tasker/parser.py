@@ -112,6 +112,8 @@ class Parser(ParserType):
         self.logger.error(reason)
         if self.abort_exit:
             sys.exit(1)
+        else:
+            raise Exception("Aborting due to error")
 
     def __execute(self, task: Task) -> bool:
         try:
