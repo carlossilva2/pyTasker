@@ -196,6 +196,7 @@ class Settings(TypedDict):
 class ParserType:
 
     system: str
+    abort_exit: bool
     task: InstructionSet
     logger: Logger
     settings: Settings
@@ -212,7 +213,7 @@ class ParserType:
     def warn_user(self) -> None:
         pass
 
-    def abort(self, reason: str, abort: bool) -> None:
+    def abort(self, reason: str) -> None:
         pass
 
     def __execute(self, task: Task) -> bool:

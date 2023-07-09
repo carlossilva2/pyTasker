@@ -50,7 +50,7 @@ class Parser(ParserType):
         self.supported_os = ["Windows"]  # List of Tasker supported OSes
         self.logger = logger
         if task not in self.list_all_tasks():
-            self.abort(f"'{task}' InstructionSet was not found", abort=abort_exit)
+            self.abort(f"'{task}' InstructionSet was not found")
         self.warn_user()
         self.__first_execution_routine()
         self.task: InstructionSet = json.load(
@@ -58,9 +58,7 @@ class Parser(ParserType):
         )
         analysis = self.__analyse_keys()
         if not analysis[0]:
-            self.abort(
-                f'{analysis[3]} "{analysis[1]}" in {analysis[2]}', abort=abort_exit
-            )
+            self.abort(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
         self.__optional_parameters()
         self.settings = self.__get_configs()
         # load extensions
@@ -110,9 +108,9 @@ class Parser(ParserType):
                 self.logger.error("Answer not allowed. Aborting...")
                 sys.exit(1)
 
-    def abort(self, reason: str, abort: bool = False) -> None:
+    def abort(self, reason: str) -> None:
         self.logger.error(reason)
-        if abort:
+        if self.abort_exit:
             sys.exit(1)
 
     def __execute(self, task: Task) -> bool:
@@ -158,7 +156,6 @@ class Parser(ParserType):
                 if ex is None:
                     self.abort(
                         f"No executable found with name {chalk.red(task['extension_name'])}",
-                        self.abort_exit,
                     )
                 function: OperationType = ex["executable"].Extension(
                     self, task, self.logger
@@ -313,7 +310,6 @@ class Parser(ParserType):
             except Exception:
                 self.abort(
                     f"There was a problem importing {chalk.yellow(extension['name'])} Custom Extension. Please revise code implementation",
-                    self.abort_exit,
                 )
         return modules
 
