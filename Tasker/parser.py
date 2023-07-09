@@ -42,14 +42,15 @@ from .types import (
 
 @implements(ParserType)
 class Parser(ParserType):
-    def __init__(self, task: str, logger: Logger) -> None:
+    def __init__(self, task: str, logger: Logger, abort_exit: bool = False) -> None:
+        self.abort_exit = abort_exit
         self.execution = {}
         t = Timer()
         t.start()
         self.supported_os = ["Windows"]  # List of Tasker supported OSes
         self.logger = logger
         if task not in self.list_all_tasks():
-            self.abort(f"'{task}' InstructionSet was not found")
+            self.abort(f"'{task}' InstructionSet was not found", abort=abort_exit)
         self.warn_user()
         self.__first_execution_routine()
         self.task: InstructionSet = json.load(
@@ -57,7 +58,9 @@ class Parser(ParserType):
         )
         analysis = self.__analyse_keys()
         if not analysis[0]:
-            self.abort(f'{analysis[3]} "{analysis[1]}" in {analysis[2]}')
+            self.abort(
+                f'{analysis[3]} "{analysis[1]}" in {analysis[2]}', abort=abort_exit
+            )
         self.__optional_parameters()
         self.settings = self.__get_configs()
         # load extensions
@@ -107,9 +110,10 @@ class Parser(ParserType):
                 self.logger.error("Answer not allowed. Aborting...")
                 sys.exit(1)
 
-    def abort(self, reason: str) -> None:
+    def abort(self, reason: str, abort: bool = False) -> None:
         self.logger.error(reason)
-        sys.exit(1)
+        if abort:
+            sys.exit(1)
 
     def __execute(self, task: Task) -> bool:
         try:
@@ -153,7 +157,8 @@ class Parser(ParserType):
                 )
                 if ex is None:
                     self.abort(
-                        f"No executable found with name {chalk.red(task['extension_name'])}"
+                        f"No executable found with name {chalk.red(task['extension_name'])}",
+                        self.abort_exit,
                     )
                 function: OperationType = ex["executable"].Extension(
                     self, task, self.logger
@@ -307,7 +312,8 @@ class Parser(ParserType):
                 modules.append(CustomOperation(executable=spec, summon=extension["name"]))
             except Exception:
                 self.abort(
-                    f"There was a problem importing {chalk.yellow(extension['name'])} Custom Extension. Please revise code implementation"
+                    f"There was a problem importing {chalk.yellow(extension['name'])} Custom Extension. Please revise code implementation",
+                    self.abort_exit,
                 )
         return modules
 
