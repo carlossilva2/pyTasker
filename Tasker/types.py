@@ -212,7 +212,7 @@ class ParserType:
     def warn_user(self) -> None:
         pass
 
-    def abort(self, reason: str) -> None:
+    def abort(self, reason: str, abort: bool) -> None:
         pass
 
     def __execute(self, task: Task) -> bool:
