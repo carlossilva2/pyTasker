@@ -197,6 +197,7 @@ class ParserType:
 
     system: str
     abort_exit: bool
+    from_ui: bool
     task: InstructionSet
     logger: Logger
     settings: Settings
@@ -207,13 +208,16 @@ class ParserType:
     __executed_tasks: List[Task]
     __operation_stack: list
 
-    def execute(self) -> None:
+    def execute(self) -> Dict[str, Dict[str, bool | str]]:
         pass
 
     def warn_user(self) -> None:
         pass
 
     def abort(self, reason: str) -> None:
+        pass
+
+    def get_execution_time(self) -> str:
         pass
 
     def __execute(self, task: Task) -> bool:
@@ -266,11 +270,19 @@ class ParserType:
         pass
 
     @staticmethod
-    def create_extension(name: str) -> None:
+    def create_extension(name: str) -> str:
         pass
 
     @staticmethod
     def add_alias(alias: Alias, logger: Logger) -> None:
+        pass
+
+    @staticmethod
+    def get_alias() -> List[Alias]:
+        pass
+
+    @staticmethod
+    def list_extensions() -> List[Extension]:
         pass
 
 

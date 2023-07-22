@@ -9,6 +9,9 @@ PY310/
 .mypy_cache/
 .pytest_cache/
 
+# PyCharm
+.idea/*
+
 # Distribution / packaging
 .Python
 env/

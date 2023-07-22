@@ -7,12 +7,13 @@ from hashlib import md5
 from importlib.machinery import SourceFileLoader as importer
 from logging import WARNING, Logger, getLogger
 from time import time
-from typing import List, Literal, Union
+from typing import Dict, List, Literal, Union
 from webbrowser import open as FileOpener
 
 import chalk
 from requests import get
 
+from .cli import get_logger
 from .common import Timer, pip, pip_freeze
 from .inspector import implements
 from .operations import *
@@ -32,6 +33,7 @@ from .types import (
     OPERATIONS,
     Alias,
     CustomOperation,
+    Extension,
     InstructionSet,
     OperationType,
     ParserType,
@@ -42,13 +44,20 @@ from .types import (
 
 @implements(ParserType)
 class Parser(ParserType):
-    def __init__(self, task: str, logger: Logger, abort_exit: bool = False) -> None:
+    def __init__(
+        self,
+        task: str,
+        logger: Logger = None,
+        abort_exit: bool = False,
+        from_ui: bool = False,
+    ) -> None:
         self.abort_exit = abort_exit
+        self.__from_ui = from_ui
         self.execution = {}
         t = Timer()
         t.start()
-        self.supported_os = ["Windows"]  # List of Tasker supported OSes
-        self.logger = logger
+        self.supported_os = ["Windows", "Linux"]  # List of Tasker supported OSes
+        self.logger = logger if logger is not None else get_logger()
         if task not in self.list_all_tasks():
             self.abort(f"'{task}' InstructionSet was not found")
         self.warn_user()
@@ -69,15 +78,18 @@ class Parser(ParserType):
         t.stop()
         self.execution["initialization"] = t.ellapsed_time
 
-    def execute(self) -> None:
+    def execute(self) -> Dict[str, Dict[str, bool | str]]:
         t = Timer()
         t.start()
         self.task["tasks"] = sorted(self.task["tasks"], key=lambda d: d["step"])
+        task_report = {}
         for task in self.task["tasks"]:
-            if self.__execute(task):
-                self.logger.debug(f"Task \"{task['name']}\" - {chalk.green('OK')}")
+            status = self.__execute(task)
+            message = f"Task \"{task['name']}\" - {chalk.green('OK') if status else chalk.red('ERROR')}"
+            if self.__from_ui:
+                task_report[task["name"]] = {"result": status, "message": message}
             else:
-                self.logger.error(f"Task \"{task['name']}\" - {chalk.red('ERROR')}")
+                self.logger.debug(message)
         # Reverse Operation Stack
         # Do this to use rollback feature on a reverse order
         self.__operation_stack.reverse()
@@ -85,13 +97,12 @@ class Parser(ParserType):
         for operation in self.__operation_stack:
             if not operation.get_state() and "-No-Rollback" not in os.environ:
                 if tick:
-                    print()
-                    print("--------------  Rollbacks  --------------")
-                    print()
+                    print("\n--------------  Rollbacks  --------------\n")
                     tick = False
                 operation.rollback()
         t.stop()
         self.execution["execution"] = t.ellapsed_time
+        return task_report
 
     def warn_user(self) -> None:
         "Verifies if current OS is one of the allowed ones"
@@ -113,7 +124,10 @@ class Parser(ParserType):
         if self.abort_exit:
             sys.exit(1)
         else:
-            raise Exception("Aborting due to error")
+            raise Exception(reason)
+
+    def get_execution_time(self) -> str:
+        return self.execution["execution"]
 
     def __execute(self, task: Task) -> bool:
         try:
@@ -307,7 +321,9 @@ class Parser(ParserType):
         modules: List[CustomOperation] = []
         for extension in self.settings["extensions"]:
             try:
-                spec: OperationType = importer(f"{extension['file'].replace('.py', '')}", extension["path"]).load_module()  # type: ignore
+                spec: OperationType = importer(
+                    f"{extension['file'].replace('.py', '')}", extension["path"]
+                ).load_module()  # type: ignore
                 modules.append(CustomOperation(executable=spec, summon=extension["name"]))
             except Exception:
                 self.abort(
@@ -441,7 +457,7 @@ class Parser(ParserType):
         FileOpener(f"{Path.expanduser('~')}/.tasker/Tasks/{file}.tasker.json")
 
     @staticmethod
-    def create_extension(name: str) -> None:
+    def create_extension(name: str) -> str:
         Parser.do_config()
         root = Path.expanduser("~")
         with open(f"{root}/.tasker/template.txt", "r") as template:
@@ -463,6 +479,7 @@ class Parser(ParserType):
             )
             json.dump(j, open(f"{root}/.tasker/config.json", "w"), indent=4)
             template.close()
+            return f"{root}/.tasker/Templates/{f_name}"
 
     @staticmethod
     def add_alias(alias: Alias, logger: Logger) -> None:
@@ -475,6 +492,19 @@ class Parser(ParserType):
                 sys.exit(1)
         settings["alias"].append(alias)
         json.dump(settings, open(f"{root}/.tasker/config.json", "w"), indent=4)
+
+    @staticmethod
+    def get_alias() -> List[Alias]:
+        "Return all available aliases"
+        root = Path.expanduser("~")
+        settings: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        return settings["alias"]
+
+    @staticmethod
+    def list_extensions() -> List[Extension]:
+        root = Path.expanduser("~")
+        settings: Settings = json.load(open(f"{root}/.tasker/config.json"))
+        return settings["extensions"]
 
     @staticmethod
     def install_remote_extension(
@@ -663,7 +693,7 @@ class Parser(ParserType):
         logger.debug(f"{extension}=={context[extension]['version']}")
 
     @staticmethod
-    def list_remote(logger: Logger) -> None:
+    def list_remote(logger: Logger | None = None) -> None:
         Parser.do_config()
         # Remove DEBUG WARNINGS
         getLogger("requests").setLevel(WARNING)
@@ -672,6 +702,7 @@ class Parser(ParserType):
         context = get(
             "https://raw.githubusercontent.com/carlossilva2/pyTasker-actions/main/context.json"
         ).json()
-        for extension in context.keys():
-            logger.debug(f"{extension}=={context[extension]['version']}")
+        if logger:
+            for extension in context.keys():
+                logger.debug(f"{extension}=={context[extension]['version']}")
         return context
